@@ -1,7 +1,7 @@
 """
 This module implements visualization operators for checks in uptrain.
 
-The module provides the `BarChart`, `LineChart`, `ScatterPlot`, `Table`, `Histogram`, and `MultiPlot` classes, 
+The module provides the `BarChart`, `LineChart`, `ScatterPlot`, `Table`, `Histogram`, `MultiPlot`, `CustomPlotlyChart` and `BubbleChart`  classes, 
 which allow generating various types of visualizations. The charts are created based on 
 the input DataFrame.
 
@@ -32,6 +32,7 @@ __all__ = [
     "Histogram",
     "MultiPlot",
     "CustomPlotlyChart",
+    "BubbleChart",
 ]
 
 
@@ -529,3 +530,52 @@ class MultiPlot(Chart):
         )
 
         return {"output": None, "extra": {"chart": fig}}
+
+@register_op
+class BubbleChart(Chart):
+    """
+    Operator to generate a bubble chart.
+
+    Attributes:
+        props (dict): Additional properties to pass to the BubbleChart constructor.
+        title (str): The title of the chart.
+        x (str): The name of the column to use for the x-axis.
+        y (str): The name of the column to use for the y-axis.
+        color (str): The name of the column to use for the bubble color.
+        description (str): Description of the chart being created.
+
+    Returns:
+        dict: A dictionary containing the chart object.
+
+    Example:
+        ```
+        import polars as pl
+        from uptrain.operators import BubbleChart
+
+        # Create a DataFrame
+        df = pl.DataFrame({
+            "x": [1, 2, 3, 4, 5],
+            "y": [10, 20, 15, 25, 30],
+            "color": [0.2, 0.5, 0.8, 0.3, 0.6]  
+        })
+
+        # Create a bubble chart using the BubbleChart class
+        bubble_chart = BubbleChart(x="x", y="y", color="color", title="Bubble Chart")
+
+        # Generate the bubble chart
+        chart = bubble_chart.run(df)["extra"]["chart"]
+
+        # Show the chart
+        chart.show()
+        ```
+
+    """
+
+    props: dict = Field(default_factory=dict)
+    title: str = ""
+    x: str = ""
+    y: str = ""
+    color: str = ""
+    description: str = ""
+
+    kind: str = "bubble"

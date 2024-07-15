@@ -33,6 +33,7 @@ __all__ = [
     "Table",
     "CustomPlotlyChart",
     "Scatter3DPlot",
+    "BubbleChart",
     # language - also include all the subimports
     "language",
     "GrammarScore",
@@ -129,6 +130,7 @@ from .chart import (
     MultiPlot,
     CustomPlotlyChart,
     Scatter3DPlot,
+    BubbleChart,
 )
 
 from . import language
