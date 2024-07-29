@@ -134,6 +134,7 @@ from .chart import (
 )
 
 from . import language
+from .language.mtbench import MTBenchScore  
 from .language.grammar import GrammarScore
 from .language.openai_evals import OpenaiEval, PromptEval
 from .language.rouge import RougeScore

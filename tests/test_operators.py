@@ -391,3 +391,30 @@ def test_text_comparison_operator():
 
     # Print the comparison results
     print(comparison)
+
+def test_mtbench_operator():
+    import polars as pl
+    from uptrain.operators import MTBenchScore 
+
+    # Create a DataFrame
+    df = pl.DataFrame(
+        {
+            "dialogue_generated": [
+                ["Hi", "Hello"],
+                ["How are you?", "I'm fine, thanks."]
+            ],
+            "dialogue_source": [
+                ["Hello", "Hi"],
+                ["How do you do?", "I'm good, thank you."]
+            ],
+        }
+    )
+
+    # Create an instance of the MTBenchScore class
+    mtbench_op = MTBenchScore()
+
+    # Calculate the MT-Bench scores
+    scores = mtbench_op.run(df)["output"]
+
+    # Print the MT-Bench scores
+    print(scores)
