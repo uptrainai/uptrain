@@ -283,6 +283,32 @@ def test_bleu_operator():
     # Print the BLEU scores
     print(scores)
 
+def test_mmlu_operator():
+    import polars as pl
+    from uptrain.operators import MMLUScore
+
+    # Create a DataFrame
+    df = pl.DataFrame(
+        {
+            "text_generated": [
+                "This is the generated text.",
+                "Another generated sentence.",
+            ],
+            "text_source": [
+                "This is the original source text.",
+                "This is a different source text.",
+            ],
+        }
+    )
+
+    # Create an instance of the MMLUScore class
+    mmlu_op = MMLUScore()
+
+    # Calculate the MMLU scores
+    scores = mmlu_op.run(df)["output"]
+
+    # Print the MMLU scores
+    print(scores)
 
 # uptrain.operators.language.meteor
 def test_meteor_operator():
