@@ -139,6 +139,7 @@ from .language.openai_evals import OpenaiEval, PromptEval
 from .language.rouge import RougeScore
 from .language.bleu import BLEUScore
 from .language.meteor import METEORScore
+from .language.mmlu import MMLUScore
 from .language.text import (
     DocsLinkVersion,
     TextLength,
