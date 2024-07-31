@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "uptrain.fullname" . }}-dashboard
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: {{ .Values.image.dashboard.repository }}:{{ .Values.image.dashboard.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.dashboard.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          command:
+            - npm
+            - run
+            - dev
+          workingDir: /app/
+          env:
+            {{- range .Values.env.dashboard }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "uptrain.fullname" . }}-server
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+        - name: server
+          image: {{ .Values.image.server.repository }}:{{ .Values.image.server.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.server.pullPolicy }}
+          ports:
+            - containerPort: 4300
+          command:
+            - python
+            - app.py
+          env:
+            {{- range .Values.env.server }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          workingDir: /app/
+          volumeMounts:
+            - mountPath: /data
+              name: uptrain-server-claim
+
+      volumes:
+        - name: uptrain-server-claim
+          persistentVolumeClaim:
+            claimName: uptrain-server-claim
