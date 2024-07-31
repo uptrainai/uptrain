@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "uptrain.fullname" . }}-dashboard
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.dashboard.type }}
+  ports:
+    - port: {{ .Values.service.dashboard.port }}
+      targetPort: 3000
+      nodePort: {{ .Values.service.dashboard.nodePort }}
+  selector:
+    app: dashboard
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "uptrain.fullname" . }}-server
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.server.type }}
+  ports:
+    - port: {{ .Values.service.server.port }}
+      targetPort: 4300
+      nodePort: {{ .Values.service.server.nodePort }}
+  selector:
+    app: server

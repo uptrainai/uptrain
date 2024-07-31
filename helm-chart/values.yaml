@@ -1,0 +1,88 @@
+replicaCount: 1
+
+image:
+  dashboard:
+    repository: "ghcr.io/uptrain-ai/uptrain-dashboard"
+    tag: latest
+    pullPolicy: IfNotPresent
+  server:
+    repository: "ghcr.io/uptrain-ai/uptrain"
+    tag: latest
+    pullPolicy: IfNotPresent
+
+service:
+  dashboard:
+    type: NodePort
+    port: 3000
+    nodePort: 30060
+  server:
+    type: NodePort
+    port: 4300
+    nodePort: 30061
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+resources: {}
+
+nodeSelector:
+  kubernetes.io/hostname: mk8s-master01.jio.com
+
+tolerations: []
+
+affinity: {}
+
+autoscaling:
+  enabled:
+    dashboard: false
+    server: false
+  dashboard:
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  server:
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: "dashboard.example.com"
+      paths:
+        - path: "/"
+          service: "dashboard"
+          pathType: "Prefix"
+    - host: "server.example.com"
+      paths:
+        - path: "/"
+          service: "server"
+          pathType: "Prefix"
+  tls: []
+
+env:
+  dashboard:
+    - name: NEXT_PUBLIC_BACKEND_URL
+      value: "http://uptrain-server/"
+    - name: NEXT_PUBLIC_BASE_PATH
+      value: "/dashboard"
+    - name: NEXT_TELEMETRY_DISABLED
+      value: "1"
+    - name: SERVER_DATA_DIR
+      value: "./data"
+    - name: UPTRAIN_LOCAL_URL
+      value: "http://uptrain-server"
+  server:
+    - name: NEXT_PUBLIC_BACKEND_URL
+      value: "http://uptrain-server/"
+    - name: NEXT_PUBLIC_BASE_PATH
+      value: "/dashboard"
+    - name: SERVER_DATA_DIR
+      value: "./data"
+    - name: UPTRAIN_LOCAL_URL
+      value: "http://uptrain-server"
