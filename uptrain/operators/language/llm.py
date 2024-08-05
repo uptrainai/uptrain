@@ -178,7 +178,12 @@ class LLMMulticlient:
         self.aclient = aclient
         self.settings = settings
         if settings is not None:
-            if (
+            if settings.custom_llm_provider == "litellm":
+                self.aclient = AsyncOpenAI(
+                    base_url=settings.api_base, api_key=settings.api_key
+                )
+                
+            elif (
                 settings.model.startswith("gpt")
                 and settings.check_and_get("openai_api_key") is not None
             ):
@@ -186,7 +191,7 @@ class LLMMulticlient:
                 if self.aclient is None:
                     self.aclient = AsyncOpenAI()
 
-            if (
+            elif (
                 settings.model.startswith("azure")
                 and settings.check_and_get("azure_api_key") is not None
             ):
@@ -196,7 +201,7 @@ class LLMMulticlient:
                     azure_endpoint=settings.azure_api_base,
                 )
 
-            if (
+            elif (
                 settings.model.startswith("anyscale")
                 and settings.check_and_get("anyscale_api_key") is not None
             ):
@@ -204,7 +209,7 @@ class LLMMulticlient:
                     api_key=settings.anyscale_api_key,
                     base_url="https://api.endpoints.anyscale.com/v1",
                 )
-            if (
+            elif (
                 settings.model.startswith("together")
                 and settings.check_and_get("together_api_key") is not None
             ):
@@ -212,7 +217,7 @@ class LLMMulticlient:
                     api_key=settings.together_api_key,
                     base_url="https://api.together.xyz/v1",
                 )
-            if (
+            elif (
                 settings.model.startswith("ollama")
             ):
                 self.aclient = None        
