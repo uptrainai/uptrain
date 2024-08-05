@@ -12,7 +12,7 @@ import json
 import io
 import os
 import typing as t
-import copy 
+import copy
 import random
 import uvicorn
 import polars as pl
@@ -40,14 +40,24 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 
+
 def get_uuid():
     import uuid
+
     return str(uuid.uuid4().hex)
+
 
 from loguru import logger
 from sqlalchemy.orm import Session
 
-from uptrain.utilities.db import create_database, ModelUser, ModelPrompt, ModelProject, ModelProjectDataset, ModelProjectRun
+from uptrain.utilities.db import (
+    create_database,
+    ModelUser,
+    ModelPrompt,
+    ModelProject,
+    ModelProjectDataset,
+    ModelProjectRun,
+)
 from uptrain.utilities.utils import (
     _get_fsspec_filesystem,
     checks_mapping,
@@ -59,6 +69,7 @@ from uptrain.utilities import app_schema
 
 def _row_to_dict(row):
     return {k: v for k, v in row.__dict__.items() if not k.startswith("_")}
+
 
 def intersection(lst1, lst2):
     lst3 = [value for value in lst1 if value in lst2]
@@ -184,14 +195,14 @@ def get_user(
             "api_key": "default_key",
         }
 
+
 @router_public.get("/get_data", response_model=app_schema.ProjectData)
 def get_data(
     evaluation_id: str,
     db: Session = Depends(get_db),
     user_id: str = Depends(validate_api_key_public),
 ):
-    """Get all the data for a particular evaluation for the given user.
-    """
+    """Get all the data for a particular evaluation for the given user."""
     user = db.query(ModelUser).filter_by(id=user_id).first()
     if user is None:
         raise HTTPException(status_code=403, detail="Invalid user name")
@@ -206,42 +217,66 @@ def get_data(
     created_at = project_run.created_at
     checks = project_run.checks
 
-    data = JsonReader(fpath = address).setup(UserSettings()).run()['output'].to_dicts()
+    data = JsonReader(fpath=address).setup(UserSettings()).run()["output"].to_dicts()
 
     if run_type == "evaluation" or run_type == "experiment" or run_type == "prompt":
-        scores = [col[6:] for col in data[0].keys() if (col.startswith("score_") and 'confidence' not in col)]
+        scores = [
+            col[6:]
+            for col in data[0].keys()
+            if (col.startswith("score_") and "confidence" not in col)
+        ]
         if run_type == "evaluation" or run_type == "prompt":
-            return app_schema.ProjectData(data=[data, created_at, scores, checks], id=evaluation_id)
+            return app_schema.ProjectData(
+                data=[data, created_at, scores, checks], id=evaluation_id
+            )
         else:
             plot_data = {}
             exp_data = pl.DataFrame(data)
             for col in scores:
-                col_name = 'score_' + col
-                plot_data.update({col : exp_data.group_by([exp_column], maintain_order=True).agg(pl.col(col_name)).to_dicts()})
+                col_name = "score_" + col
+                plot_data.update(
+                    {
+                        col: exp_data.group_by([exp_column], maintain_order=True)
+                        .agg(pl.col(col_name))
+                        .to_dicts()
+                    }
+                )
 
             columns = exp_data.columns
-            columns.remove('question')
-            display_data = exp_data.group_by(["question"], maintain_order=True).agg(pl.col(col) for col in columns).to_dicts()
-            unqiue_values  = list(set(exp_data[exp_column].to_list()))
-            return app_schema.ProjectData(data = [display_data, created_at, scores, unqiue_values, exp_column, plot_data, checks], id = evaluation_id)
-
+            columns.remove("question")
+            display_data = (
+                exp_data.group_by(["question"], maintain_order=True)
+                .agg(pl.col(col) for col in columns)
+                .to_dicts()
+            )
+            unqiue_values = list(set(exp_data[exp_column].to_list()))
+            return app_schema.ProjectData(
+                data=[
+                    display_data,
+                    created_at,
+                    scores,
+                    unqiue_values,
+                    exp_column,
+                    plot_data,
+                    checks,
+                ],
+                id=evaluation_id,
+            )
 
 
 def _save_log_and_eval(
-        project_name: str, 
-        evaluation_name: str, 
-        metadata: dict,
-        user_id: str, 
-        source_data: list[dict],
-        sink_data: list[dict],
-        checks: list[dict], 
-        db: Session,
-        exp_column: t.Optional[str] = None
-    ):
+    project_name: str,
+    evaluation_name: str,
+    metadata: dict,
+    user_id: str,
+    source_data: list[dict],
+    sink_data: list[dict],
+    checks: list[dict],
+    db: Session,
+    exp_column: t.Optional[str] = None,
+):
     existing_project = (
-        db.query(ModelProject)
-        .filter_by(name=project_name, user_id=user_id)
-        .first()
+        db.query(ModelProject).filter_by(name=project_name, user_id=user_id).first()
     )
     if existing_project is not None:
         project_id = existing_project.id
@@ -249,9 +284,7 @@ def _save_log_and_eval(
         project_id = get_uuid()
 
     existing_evaluations = (
-        db.query(ModelProjectRun)
-        .filter_by(project_id=project_id)
-        .all()
+        db.query(ModelProjectRun).filter_by(project_id=project_id).all()
     )
 
     exist_evals = {}
@@ -261,7 +294,7 @@ def _save_log_and_eval(
             exist_evals[existing_evaluation.name] = True
             if evaluation_name == str(existing_evaluation.name):
                 duplicate_check = True
-        
+
         if duplicate_check:
             index = 1
             while True:
@@ -269,7 +302,7 @@ def _save_log_and_eval(
                     index = index + 1
                 else:
                     break
-            evaluation_name  = f"{evaluation_name}_{index}"
+            evaluation_name = f"{evaluation_name}_{index}"
 
     if "dataset_id" not in metadata:
         if "dataset_name" in metadata:
@@ -293,7 +326,9 @@ def _save_log_and_eval(
             address = os.path.join(DATABASE_PATH, "uptrain-datasets", name_w_version)
             os.makedirs(address, exist_ok=True)
             address = os.path.join(address, f"v_{version}")
-            JsonWriter(fpath=address).setup(UserSettings()).run(pl.DataFrame(source_data))
+            JsonWriter(fpath=address).setup(UserSettings()).run(
+                pl.DataFrame(source_data)
+            )
             rows_count = len(source_data)
             db_item = ModelProjectDataset(
                 id=dataset_id,
@@ -302,7 +337,7 @@ def _save_log_and_eval(
                 name=dataset_name,
                 version=version,
                 address=address,
-                rows_count=rows_count
+                rows_count=rows_count,
             )
             db.add(db_item)
             db.commit()
@@ -333,17 +368,15 @@ def _save_log_and_eval(
                 name=project_name,
                 user_id=user_id,
                 dataset_id=dataset_id,
-                checks=json.dumps({"checks": checks})
+                checks=json.dumps({"checks": checks}),
             )
             db.add(db_item)
             db.commit()
     except Exception as exc:
         logger.exception("Error adding project to platform")
         db.rollback()
-        raise HTTPException(
-            status_code=400, detail="Error adding project to platform"
-        )       
-    
+        raise HTTPException(status_code=400, detail="Error adding project to platform")
+
     evaluation_id = get_uuid()
 
     name_w_version = os.path.join("uptrain-eval-results", evaluation_id)
@@ -357,7 +390,7 @@ def _save_log_and_eval(
         run_type = "prompt"
     add_project_run(
         app_schema.EvalCreate(
-            evaluation_id=evaluation_id, 
+            evaluation_id=evaluation_id,
             evaluation_name=evaluation_name,
             dataset_id=dataset_id,
             project_id=project_id,
@@ -366,21 +399,63 @@ def _save_log_and_eval(
             run_type=run_type,
             checks={"checks": checks},
             exp_column=exp_column,
-            prompt_id = metadata.get("prompt_id", None)
+            prompt_id=metadata.get("prompt_id", None),
         ),
-        db
+        db,
     )
-    return 
+    return
 
-def _create_evaluation(db: Session, evaluation_id: str, evaluation_name: str, address: str,  project_id: str, dataset_id: str, user_id: str, run_type: str, checks: dict, exp_column: str=None, prompt_id: str=None):
+
+def _create_evaluation(
+    db: Session,
+    evaluation_id: str,
+    evaluation_name: str,
+    address: str,
+    project_id: str,
+    dataset_id: str,
+    user_id: str,
+    run_type: str,
+    checks: dict,
+    exp_column: str = None,
+    prompt_id: str = None,
+):
     """Create a new evaluation."""
     if exp_column is not None:
-        db_eval = ModelProjectRun(id=evaluation_id, name=evaluation_name, address=address, project_id=project_id, dataset_id=dataset_id, user_id=user_id, run_type=run_type, exp_column=exp_column, checks=checks)
+        db_eval = ModelProjectRun(
+            id=evaluation_id,
+            name=evaluation_name,
+            address=address,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            user_id=user_id,
+            run_type=run_type,
+            exp_column=exp_column,
+            checks=checks,
+        )
     else:
         if prompt_id is not None:
-            db_eval = ModelProjectRun(id=evaluation_id, name=evaluation_name, address=address, project_id=project_id, dataset_id=dataset_id, user_id=user_id, run_type=run_type, prompt_id=prompt_id, checks=checks)
+            db_eval = ModelProjectRun(
+                id=evaluation_id,
+                name=evaluation_name,
+                address=address,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                user_id=user_id,
+                run_type=run_type,
+                prompt_id=prompt_id,
+                checks=checks,
+            )
         else:
-            db_eval = ModelProjectRun(id=evaluation_id, name=evaluation_name, address=address, project_id=project_id, dataset_id=dataset_id, user_id=user_id, run_type=run_type, checks=checks)
+            db_eval = ModelProjectRun(
+                id=evaluation_id,
+                name=evaluation_name,
+                address=address,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                user_id=user_id,
+                run_type=run_type,
+                checks=checks,
+            )
     try:
         db.add(db_eval)
         db.commit()
@@ -388,32 +463,33 @@ def _create_evaluation(db: Session, evaluation_id: str, evaluation_name: str, ad
     except Exception as exc:
         db.rollback()
         raise exc
-    
+
 
 @router_internal.post("/evaluation")
-def add_project_run(
-    evaluation: app_schema.EvalCreate,
-    db: Session = Depends(get_db)
-):
+def add_project_run(evaluation: app_schema.EvalCreate, db: Session = Depends(get_db)):
     try:
         db_eval = _create_evaluation(
-            db, 
-            evaluation.evaluation_id, 
-            evaluation.evaluation_name, 
-            evaluation.address, 
-            evaluation.project_id, 
-            evaluation.dataset_id, 
-            evaluation.user_id, 
+            db,
+            evaluation.evaluation_id,
+            evaluation.evaluation_name,
+            evaluation.address,
+            evaluation.project_id,
+            evaluation.dataset_id,
+            evaluation.user_id,
             evaluation.run_type,
             evaluation.checks,
             evaluation.exp_column,
-            evaluation.prompt_id
+            evaluation.prompt_id,
         )
         return db_eval
     except Exception as exc:
         logger.exception(exc)
-        raise HTTPException(status_code=400, detail=f"Error creating the evaluation: {evaluation.evaluation_name}")
-    
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error creating the evaluation: {evaluation.evaluation_name}",
+        )
+
+
 @router_public.post("/add_project_data")
 async def add_project_data(
     eval_args: app_schema.EvaluateV2,
@@ -428,16 +504,16 @@ async def add_project_data(
     metadata = eval_args.metadata
 
     _save_log_and_eval(
-                project_name=project_name, 
-                evaluation_name=evaluation_name, 
-                metadata = metadata,
-                user_id=user_id,
-                source_data=eval_args.data,
-                sink_data=sink_data,
-                checks=eval_args.checks,
-                db=db,
-                exp_column=exp_column
-            )
+        project_name=project_name,
+        evaluation_name=evaluation_name,
+        metadata=metadata,
+        user_id=user_id,
+        source_data=eval_args.data,
+        sink_data=sink_data,
+        checks=eval_args.checks,
+        db=db,
+        exp_column=exp_column,
+    )
     return
 
 
@@ -449,16 +525,13 @@ def list_projects(
     user_id: str = Depends(validate_api_key_public),
 ):
     """Get the last N runs for the user (non-scheduled). Optionally filter by status."""
-    query = (
-        db.query(ModelProject)
-        .filter(ModelProject.user_id == user_id)
-    )
-    
+    query = db.query(ModelProject).filter(ModelProject.user_id == user_id)
+
     projects = query.order_by(ModelProject.created_at.desc()).limit(num).all()
 
     # Convert to list of dicts for easier serialization
     results = []
-    ### This will include evaluations, experiments and prompts run. 
+    ### This will include evaluations, experiments and prompts run.
     for project in projects:
         results.append(
             app_schema.Project(
@@ -467,7 +540,7 @@ def list_projects(
                 created_at=project.created_at,
                 project_name=project.name,
                 dataset_id=project.dataset_id,
-                checks=eval(project.checks)
+                checks=eval(project.checks),
             )
         )
     return results
@@ -482,9 +555,8 @@ def list_project_runs(
     user_id: str = Depends(validate_api_key_public),
 ):
     """Get the last N runs for the user (non-scheduled). Optionally filter by status."""
-    query = (
-        db.query(ModelProjectRun)
-        .filter(ModelProjectRun.user_id == user_id, ModelProjectRun.project_id == project_id)
+    query = db.query(ModelProjectRun).filter(
+        ModelProjectRun.user_id == user_id, ModelProjectRun.project_id == project_id
     )
 
     project_runs = query.order_by(ModelProjectRun.created_at.desc()).limit(num).all()
@@ -500,7 +572,7 @@ def list_project_runs(
                 created_at=run.created_at,
                 dataset_id=run.dataset_id,
                 run_type=run.run_type,
-                exp_column=run.exp_column
+                exp_column=run.exp_column,
             )
         )
 
@@ -515,9 +587,8 @@ def prompt_runs(
     user_id: str = Depends(validate_api_key_public),
 ):
     """Get the last N runs for the user (non-scheduled). Optionally filter by status."""
-    query = (
-        db.query(ModelPrompt)
-        .filter(ModelPrompt.user_id == user_id, ModelPrompt.project_id == project_id)
+    query = db.query(ModelPrompt).filter(
+        ModelPrompt.user_id == user_id, ModelPrompt.project_id == project_id
     )
 
     prompt_runs = query.order_by(ModelPrompt.created_at.asc()).limit(num).all()
@@ -529,39 +600,57 @@ def prompt_runs(
         prompt_name = run.name
         prompt_version = run.version
         prompt = run.prompt
-        prompt_dict = {'prompt_id': prompt_id, 'prompt_name': prompt_name, 'prompt_version': prompt_version, 'prompt': prompt}
-        query_prompt_data = db.query(ModelProjectRun).filter(ModelProjectRun.prompt_id == prompt_id, ModelProjectRun.user_id == user_id).first()
+        prompt_dict = {
+            "prompt_id": prompt_id,
+            "prompt_name": prompt_name,
+            "prompt_version": prompt_version,
+            "prompt": prompt,
+        }
+        query_prompt_data = (
+            db.query(ModelProjectRun)
+            .filter(
+                ModelProjectRun.prompt_id == prompt_id,
+                ModelProjectRun.user_id == user_id,
+            )
+            .first()
+        )
 
-        if query_prompt_data is None: #or not len(list(query_prompt_data)):
+        if query_prompt_data is None:  # or not len(list(query_prompt_data)):
             continue
         prompt_run = query_prompt_data
-        
-        evaluation_id = prompt_run.id 
-        prompt_dict['evaluation_id'] = evaluation_id
-        prompt_dict['created_at'] = prompt_run.created_at
-        prompt_dict['dataset_id'] = prompt_run.dataset_id
+
+        evaluation_id = prompt_run.id
+        prompt_dict["evaluation_id"] = evaluation_id
+        prompt_dict["created_at"] = prompt_run.created_at
+        prompt_dict["dataset_id"] = prompt_run.dataset_id
         address = prompt_run.address
-        data = JsonReader(fpath = address).setup(UserSettings()).run()['output'].to_dicts()
+        data = (
+            JsonReader(fpath=address).setup(UserSettings()).run()["output"].to_dicts()
+        )
         data_df = pl.DataFrame(data)
-        scores = [col for col in data[0].keys() if (col.startswith("score_") and "confidence" not in col)]
+        scores = [
+            col
+            for col in data[0].keys()
+            if (col.startswith("score_") and "confidence" not in col)
+        ]
         scores_dict = {}
         mean_values = data_df.mean().to_dicts()[0]
         for score in scores:
             scores_dict[score] = round(mean_values[score], 2)
-        prompt_dict['scores'] = scores_dict
+        prompt_dict["scores"] = scores_dict
         prompts.append(copy.deepcopy(prompt_dict))
-     
+
     for run in prompts:
         results.append(
             app_schema.PromptRun(
-                evaluation_id=run['evaluation_id'],
-                prompt_id=run['prompt_id'],
-                prompt_name=run['prompt_name'],
-                prompt_version=run['prompt_version'],
-                prompt=run['prompt'],
-                created_at=run['created_at'],
-                dataset_id=run['dataset_id'],
-                scores=run['scores']
+                evaluation_id=run["evaluation_id"],
+                prompt_id=run["prompt_id"],
+                prompt_name=run["prompt_name"],
+                prompt_version=run["prompt_version"],
+                prompt=run["prompt"],
+                created_at=run["created_at"],
+                dataset_id=run["dataset_id"],
+                scores=run["scores"],
             )
         )
     return results
@@ -576,8 +665,7 @@ def compare_prompt(
     db: Session = Depends(get_db),
     user_id: str = Depends(validate_api_key_public),
 ):
-    """Get all the data for a particular evaluation for the given user.
-    """
+    """Get all the data for a particular evaluation for the given user."""
     user = db.query(ModelUser).filter_by(id=user_id).first()
     if user is None:
         raise HTTPException(status_code=403, detail="Invalid user name")
@@ -592,37 +680,74 @@ def compare_prompt(
     created_at_1 = project_run_1.created_at
     created_at_2 = project_run_2.created_at
 
-    
-    data_1 = JsonReader(fpath = address_1).setup(UserSettings()).run()['output'].with_columns(
-        experiment_column = pl.lit(str(version_1))
-    ).to_dicts()
-    data_2 = JsonReader(fpath = address_2).setup(UserSettings()).run()['output'].with_columns(
-        experiment_column = pl.lit(str(version_2))
+    data_1 = (
+        JsonReader(fpath=address_1)
+        .setup(UserSettings())
+        .run()["output"]
+        .with_columns(experiment_column=pl.lit(str(version_1)))
+        .to_dicts()
+    )
+    data_2 = (
+        JsonReader(fpath=address_2)
+        .setup(UserSettings())
+        .run()["output"]
+        .with_columns(experiment_column=pl.lit(str(version_2)))
+        .to_dicts()
+    )
+
+    combined_data = pl.concat(
+        [pl.DataFrame(data_1), pl.DataFrame(data_2)], how="diagonal"
     ).to_dicts()
 
-    combined_data = pl.concat([pl.DataFrame(data_1), pl.DataFrame(data_2)], how="diagonal").to_dicts()
-    
-    scores_1 = [col[6:] for col in data_1[0].keys() if (col.startswith("score_") and 'confidence' not in col)]
-    scores_2 = [col[6:] for col in data_2[0].keys() if (col.startswith("score_") and 'confidence' not in col)]
+    scores_1 = [
+        col[6:]
+        for col in data_1[0].keys()
+        if (col.startswith("score_") and "confidence" not in col)
+    ]
+    scores_2 = [
+        col[6:]
+        for col in data_2[0].keys()
+        if (col.startswith("score_") and "confidence" not in col)
+    ]
     common_scores = intersection(scores_1, scores_2)
 
     plot_data = {}
-    exp_column = 'experiment_column'
+    exp_column = "experiment_column"
     exp_data = pl.DataFrame(combined_data)
     for col in common_scores:
-        col_name = 'score_' + col
-        plot_data.update({col : exp_data.group_by([exp_column], maintain_order=True).agg(pl.col(col_name)).to_dicts()})
+        col_name = "score_" + col
+        plot_data.update(
+            {
+                col: exp_data.group_by([exp_column], maintain_order=True)
+                .agg(pl.col(col_name))
+                .to_dicts()
+            }
+        )
 
     columns = exp_data.columns
-    columns.remove('question')
-    display_data = exp_data.group_by(["question"], maintain_order=True).agg(pl.col(col) for col in columns).to_dicts()
-    unqiue_values  = list(set(exp_data[exp_column].to_list()))
-    return app_schema.ProjectData(data = [display_data, created_at_1, common_scores, unqiue_values, exp_column, plot_data], id = evaluation_id_1)
+    columns.remove("question")
+    display_data = (
+        exp_data.group_by(["question"], maintain_order=True)
+        .agg(pl.col(col) for col in columns)
+        .to_dicts()
+    )
+    unqiue_values = list(set(exp_data[exp_column].to_list()))
+    return app_schema.ProjectData(
+        data=[
+            display_data,
+            created_at_1,
+            common_scores,
+            unqiue_values,
+            exp_column,
+            plot_data,
+        ],
+        id=evaluation_id_1,
+    )
 
 
 @router_public.get("/project_datasets", response_model=list[app_schema.ProjectDataset])
 def list_project_datasets(
-    project_id: str, 
+    project_id: str,
     db: Session = Depends(get_db),
     user_id: str = Depends(validate_api_key_public),
 ):
@@ -632,7 +757,9 @@ def list_project_datasets(
         .all()
     )
     return [
-        app_schema.ProjectDataset(name=db_item.name, version=db_item.version, id=db_item.id)
+        app_schema.ProjectDataset(
+            name=db_item.name, version=db_item.version, id=db_item.id
+        )
         for db_item in datasets
     ]
 
@@ -662,6 +789,7 @@ async def find_common_topic(
     )
 
     from uptrain.operators import TopicGenerator
+
     user = db.query(ModelUser).filter_by(id=user_id).first()
     if user is None:
         raise HTTPException(status_code=403, detail="Invalid user name")
@@ -703,17 +831,15 @@ async def create_project(
     ## project key would be present in the eval_args.metadata
 
     existing_project = (
-        db.query(ModelProject)
-        .filter_by(name=project_name, user_id=user_id)
-        .first()
+        db.query(ModelProject).filter_by(name=project_name, user_id=user_id).first()
     )
     if existing_project is not None:
         raise HTTPException(
             status_code=400, detail="cannot create a project with the same name."
         )
-    
+
     evaluation_name = "default_run"
-    version = str(random.random()).split('.')[-1][:2]
+    version = str(random.random()).split(".")[-1][:2]
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
     address = os.path.join("temp-datasets", name_w_version)
     with fsspec_fs.open(address, "wb") as f:
@@ -741,7 +867,7 @@ async def create_project(
         exp_column = metadata["exp_column"]
     else:
         exp_column = None
-    
+
     try:
         user_client = EvalLLM(UserSettings(**settings_data))
         data = (
@@ -752,14 +878,23 @@ async def create_project(
             .run()["output"]
             .to_dicts()
         )
-        metadata = {'dataset_name': dataset_name}
+        metadata = {"dataset_name": dataset_name}
         if exp_column is None:
             results = user_client.evaluate(
-                data=data, checks=checks_1, project_name=project_name, evaluation_name=evaluation_name, metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=project_name,
+                evaluation_name=evaluation_name,
+                metadata=metadata,
             )
         else:
             results = user_client.evaluate_experiments(
-                data=data, checks=checks_1, project_name=project_name, evaluation_name=evaluation_name, exp_columns=[exp_column], metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=project_name,
+                evaluation_name=evaluation_name,
+                exp_columns=[exp_column],
+                metadata=metadata,
             )
         return {"message": f"Evaluation has been queued up"}
     except Exception as e:
@@ -767,7 +902,6 @@ async def create_project(
         raise HTTPException(
             status_code=500, detail=f"Error running the evaluation: {e}"
         )
-
 
 
 @router_public.post("/new_run")
@@ -785,17 +919,13 @@ async def new_run(
 ):
     ## project key would be present in the eval_args.metadata
 
-    existing_project = (
-        db.query(ModelProject)
-        .filter_by(id=project_id)
-        .first()
-    )
-    
+    existing_project = db.query(ModelProject).filter_by(id=project_id).first()
+
     checks = eval(checks[0])
     checks_1 = []
     metadata = eval(metadata)
 
-    version = str(random.random()).split('.')[-1][:2]
+    version = str(random.random()).split(".")[-1][:2]
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
     address = os.path.join("temp-datasets", name_w_version)
     with fsspec_fs.open(address, "wb") as f:
@@ -830,14 +960,23 @@ async def new_run(
             .run()["output"]
             .to_dicts()
         )
-        metadata = {'dataset_name': dataset_name}
+        metadata = {"dataset_name": dataset_name}
         if exp_column is None:
             results = user_client.evaluate(
-                data=data, checks=checks_1, project_name=existing_project.name, evaluation_name=evaluation_name, metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=existing_project.name,
+                evaluation_name=evaluation_name,
+                metadata=metadata,
             )
         else:
             results = user_client.evaluate_experiments(
-                data=data, checks=checks_1, project_name=existing_project.name, evaluation_name=evaluation_name, exp_columns=[exp_column], metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=existing_project.name,
+                evaluation_name=evaluation_name,
+                exp_columns=[exp_column],
+                metadata=metadata,
             )
         return {"message": f"Evaluation has been queued up"}
     except Exception as e:
@@ -845,25 +984,19 @@ async def new_run(
         raise HTTPException(
             status_code=500, detail=f"Error running the evaluation: {e}"
         )
-    
 
 
 @router_public.post("/add_default_run")
 async def add_default_run(
     eval_args: app_schema.DefaultRun,
     user_id: str = Depends(validate_api_key_public),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     ## project key would be present in the eval_args.metadata
     dataset_id = eval_args.dataset_id
     project_id = eval_args.project_id
 
-    existing_project = (
-        db.query(ModelProject)
-        .filter_by(id=project_id)
-        .first()
-    )
-
+    existing_project = db.query(ModelProject).filter_by(id=project_id).first()
 
     existing_dataset = (
         db.query(ModelProjectDataset)
@@ -879,12 +1012,12 @@ async def add_default_run(
     version = existing_dataset.version
 
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
-    address = os.path.join('uptrain-datasets', name_w_version)
-    
+    address = os.path.join("uptrain-datasets", name_w_version)
+
     checks = eval_args.checks
     checks_1 = []
     metadata = eval_args.metadata
-            
+
     for check in checks:
         if check in metadata:
             final_check = checks_mapping(check, metadata[check])
@@ -906,21 +1039,28 @@ async def add_default_run(
     try:
         user_client = EvalLLM(UserSettings(**settings_data))
         data = (
-            JsonReader(
-                fpath=os.path.join(DATABASE_PATH, address)
-            )
+            JsonReader(fpath=os.path.join(DATABASE_PATH, address))
             .setup(UserSettings())
             .run()["output"]
             .to_dicts()
         )
-        metadata = {'dataset_name': dataset_name, 'dataset_id': dataset_id}
+        metadata = {"dataset_name": dataset_name, "dataset_id": dataset_id}
         if exp_column is None:
             results = user_client.evaluate(
-                data=data, checks=checks_1, project_name=existing_project.name, evaluation_name=eval_args.evaluation_name, metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=existing_project.name,
+                evaluation_name=eval_args.evaluation_name,
+                metadata=metadata,
             )
         else:
             results = user_client.evaluate_experiments(
-                data=data, checks=checks_1, project_name=existing_project.name, evaluation_name=eval_args.evaluation_name, exp_columns=[exp_column], metadata=metadata
+                data=data,
+                checks=checks_1,
+                project_name=existing_project.name,
+                evaluation_name=eval_args.evaluation_name,
+                exp_columns=[exp_column],
+                metadata=metadata,
             )
         return {"message": f"Evaluation has been queued up"}
     except Exception as e:
@@ -931,7 +1071,7 @@ async def add_default_run(
 
 
 @router_public.post("/add_prompts")
-async def add_prompts(  
+async def add_prompts(
     project_id: str = Form(...),
     model: str = Form(...),
     dataset_name: str = Form(...),
@@ -952,17 +1092,13 @@ async def add_prompts(
     # else:
     #     user_name = user.name
 
-    existing_project = (
-        db.query(ModelProject)
-        .filter_by(id=project_id)
-        .first()
-    )
-    
+    existing_project = db.query(ModelProject).filter_by(id=project_id).first()
+
     checks = eval(checks[0])
     checks_1 = []
     metadata = eval(metadata)
 
-    version = str(random.random()).split('.')[-1][:2]
+    version = str(random.random()).split(".")[-1][:2]
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
     address = os.path.join("temp-datasets", name_w_version)
     with fsspec_fs.open(address, "wb") as f:
@@ -996,7 +1132,12 @@ async def add_prompts(
 
     try:
         db_item = ModelPrompt(
-            id=prompt_id, user_id=user_id, name=prompt_name, version=version, prompt=prompt, project_id=project_id
+            id=prompt_id,
+            user_id=user_id,
+            name=prompt_name,
+            version=version,
+            prompt=prompt,
+            project_id=project_id,
         )
         db.add(db_item)
         db.commit()
@@ -1038,13 +1179,11 @@ async def add_prompts(
         )
 
 
-
-
 @router_public.post("/add_default_prompt")
 async def add_default_prompt(
     eval_args: app_schema.DefaultPrompt,
     user_id: str = Depends(validate_api_key_public),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     ## project key would be present in the eval_args.metadata
     prompt_id = get_uuid()
@@ -1055,12 +1194,7 @@ async def add_default_prompt(
     prompt_name = eval_args.prompt_name
     prompt = eval_args.prompt
 
-    existing_project = (
-        db.query(ModelProject)
-        .filter_by(id=project_id)
-        .first()
-    )
-
+    existing_project = db.query(ModelProject).filter_by(id=project_id).first()
 
     existing_dataset = (
         db.query(ModelProjectDataset)
@@ -1076,8 +1210,8 @@ async def add_default_prompt(
     version = existing_dataset.version
 
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
-    address = os.path.join('uptrain-datasets', name_w_version)
-    
+    address = os.path.join("uptrain-datasets", name_w_version)
+
     existing_prompt = (
         db.query(ModelPrompt)
         .filter_by(name=prompt_name, user_id=user_id)
@@ -1095,7 +1229,7 @@ async def add_default_prompt(
             user_id=user_id,
             name=prompt_name,
             version=version,
-            prompt=prompt
+            prompt=prompt,
         )
         db.add(db_item)
         db.commit()
@@ -1105,11 +1239,11 @@ async def add_default_prompt(
         raise HTTPException(
             status_code=400, detail="Error adding/updating prompts to platform"
         )
-    
+
     checks = eval_args.checks
     checks_1 = []
     metadata = eval_args.metadata
-            
+
     for check in checks:
         if check in metadata:
             final_check = checks_mapping(check, metadata[check])
@@ -1123,15 +1257,19 @@ async def add_default_prompt(
     settings_data["uptrain_local_url"] = os.environ["UPTRAIN_LOCAL_URL"]
     settings_data.update(metadata[eval_args.model])
 
-
     metadata = {
         "dataset_id": dataset_id,
         "prompt_id": prompt_id,
         "model": eval_args.model,
     }
 
-    data = JsonReader(fpath=os.path.join(DATABASE_PATH, address)).setup(UserSettings()).run()['output'].to_dicts()
-    
+    data = (
+        JsonReader(fpath=os.path.join(DATABASE_PATH, address))
+        .setup(UserSettings())
+        .run()["output"]
+        .to_dicts()
+    )
+
     try:
         user_client = EvalLLM(UserSettings(**settings_data))
         results = user_client.evaluate_prompts(
@@ -1147,7 +1285,7 @@ async def add_default_prompt(
         raise HTTPException(
             status_code=500, detail=f"Error running the evaluation: {e}"
         )
-    
+
 
 # -----------------------------------------------------------
 # FastAPI app

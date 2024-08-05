@@ -25,4 +25,3 @@ In this story you are talking to a chatbot, what would be the first message that
 
 You just need to reply with the message that you will send to this chatbot, nothing else
 """
-

@@ -531,6 +531,7 @@ class MultiPlot(Chart):
 
         return {"output": None, "extra": {"chart": fig}}
 
+
 @register_op
 class BubbleChart(Chart):
     """
@@ -556,7 +557,7 @@ class BubbleChart(Chart):
         df = pl.DataFrame({
             "x": [1, 2, 3, 4, 5],
             "y": [10, 20, 15, 25, 30],
-            "color": [0.2, 0.5, 0.8, 0.3, 0.6]  
+            "color": [0.2, 0.5, 0.8, 0.3, 0.6]
         })
 
         # Create a bubble chart using the BubbleChart class

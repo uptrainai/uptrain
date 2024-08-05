@@ -166,16 +166,18 @@ def test_check_response_consistency():
     assert (
         "score_response_consistency" in output.columns
         and "explanation_response_consistency" in output.columns
-    )     
-    assert (
-        output["score_response_consistency"].dtype == pl.Float64 
-        and len(output["score_response_consistency"]) 
-        - output["score_response_consistency"].null_count() > 0
     )
     assert (
-        output["explanation_response_consistency"].dtype == pl.Utf8 
-        and len(output["explanation_response_consistency"]) 
-        - output["explanation_response_consistency"].null_count() > 0
+        output["score_response_consistency"].dtype == pl.Float64
+        and len(output["score_response_consistency"])
+        - output["score_response_consistency"].null_count()
+        > 0
+    )
+    assert (
+        output["explanation_response_consistency"].dtype == pl.Utf8
+        and len(output["explanation_response_consistency"])
+        - output["explanation_response_consistency"].null_count()
+        > 0
     )
 
 
@@ -685,7 +687,7 @@ def test_check_sub_query_completeness():
 # -----------------------------------------------------------
 # Multi Query
 # -----------------------------------------------------------
-    
+
 multi_query_dataset = pl.DataFrame(
     {
         "question": [

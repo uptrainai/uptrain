@@ -15,8 +15,10 @@ from uptrain import (
 )
 from uptrain.utilities import lazy_load_dep
 
+
 def check_openai_api_key(api_key):
     import openai
+
     client = openai.OpenAI(api_key=api_key)
     try:
         client.models.list()
@@ -24,9 +26,11 @@ def check_openai_api_key(api_key):
         return False
     else:
         return True
-    
+
+
 def _get_fsspec_filesystem(database_path) -> fsspec.AbstractFileSystem:
     return DirFileSystem(database_path, auto_mkdir=True)
+
 
 fsspec.config.conf["file"] = {"auto_mkdir": True}
 
@@ -89,7 +93,7 @@ def create_dirs(path: str):
         os.path.join(path),
         os.path.join(path, "uptrain-datasets"),
         os.path.join(path, "uptrain-eval-results"),
-        os.path.join(path, 'temp-datasets')
+        os.path.join(path, "temp-datasets"),
     ]
     for _dir in dirs_to_create:
         os.makedirs(_dir, exist_ok=True)

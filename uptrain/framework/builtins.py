@@ -235,6 +235,7 @@ def CheckSubQueryCompleteness():
 # MultiQuery
 # -----------------------------------------------------------
 
+
 def CheckMultiQueryAccuracy():
     return Check(
         name="multi_query_accuracy_score",

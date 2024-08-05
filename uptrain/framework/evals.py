@@ -42,17 +42,17 @@ class GuidelineAdherence(ParametricEval):
         None  # Schema of the response in case it is of type JSON, XML, etc.
     )
 
+
 class ConversationGuidelineAdherence(ParametricEval):
     guideline: str
     guideline_name: str = (
         "guideline"  # User-assigned name of the guideline to distinguish between multiple checks
     )
 
+
 class ConversationObjective(ParametricEval):
     objective: str
-    objective_name: str = (
-        "objective"  # objective of the converstion.
-    )
+    objective_name: str = "objective"  # objective of the converstion.
 
 
 class ConversationSatisfaction(ParametricEval):
