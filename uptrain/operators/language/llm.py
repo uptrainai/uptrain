@@ -249,10 +249,10 @@ class LLMMulticlient:
             data["seed"] = seed
         if response_format is not None:
             data["response_format"] = response_format
-        if custom_llm_provider is not None:
-            data["custom_llm_provider"] = custom_llm_provider
-        if api_base is not None:
-            data["api_base"] = api_base
+        # if custom_llm_provider is not None:
+        #     data["custom_llm_provider"] = custom_llm_provider
+        # if api_base is not None:
+        #     data["api_base"] = api_base
         return Payload(
             endpoint="chat.completions",
             data=data,
