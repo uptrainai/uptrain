@@ -1,34 +1,28 @@
 ---
-title: Ollama
+title: Litellm
 ---
-[Ollama](https://ollama.com/) is a great solution to run large language models (LLMs) on your local system. 
+[Litellm](https://www.litellm.ai/) is a great solution to call all LLM APIs using the OpenAI format [Bedrock, Huggingface, VertexAI, TogetherAI, Azure, OpenAI, Groq etc.]
 
 ### How will this help?
 
-Using Ollama you can run models like Llama, Gemma locally on your system.
+Using Litellm you can configure any [supported model](https://docs.litellm.ai/docs/providers) to use the OpenAI format.
 
-In this tutorial we will walk you though running evaluations on UpTrain using your local models hosted on Ollama.
+In this tutorial we will walk you through running evaluations on UpTrain using Litellm.
 
 ### Prerequisites
 
-1. Install Ollama to your system, you can download it from [here](https://ollama.com/download)
+1. Make sure you have an instance of Litellm already setup and running. Follow the [documentation](https://docs.litellm.ai/docs/) to get started.
 
-
-2. Pull the model using the command:
-
-    ```bash
-    ollama pull <model_name>
-    ```
-    
-    For the list of models supported by Ollama you can refer [here](https://ollama.com/library)
-
-3. You can enter http://localhost:11434/ in your web browser to confirm Ollama is running
+3. You will require:
+    - API base (Eg: `http://0.0.0.0:4000/chat/completions`)
+    - Model name (Eg: `llama-3`)
+    - API key: (Eg: `sk-1234`)
 
 ### How to integrate?
 **First, let's import the necessary packages**
 
 ```python
-# %pip install uptrain
+pip install uptrain
 ```
 
 ```python
@@ -56,15 +50,18 @@ data = [
 
 **Define the model**
 
-We will be using Stable LM 2 1.6B for this example. You can refer the [documentation](https://ollama.com/library/stablelm2) on Ollama.
+We will be using Llama-3 for this example.
 
-Remember to add "ollama/" at the beginning of the model name to let UpTrain know that you are using an Ollama model.
-
-<Note>You can check if you have downloaded Stable LM 2 1.6B by running `!ollama list` 
-        Else you can download it by `!ollama pull stablelm2`</Note>
 
 ```python
-settings = Settings(model='ollama/stablelm2')
+settings = Settings(
+    model="llama-3",                      # change this according to your setup
+    custom_llm_provider="litellm",
+    api_base="http://0.0.0.0:4000",       # change this according to your setup
+    api_key="sk-1234",                    # change this according to your setup
+    uptrain_local_url="http://ip:port",   # (optional) you may require this if not running uptrain on a local machine
+)
+ 
 ```
 
 **Create an EvalLLM Evaluator**
@@ -85,21 +82,14 @@ We have used the following 3 metrics from UpTrain's library:
 
 You can look at the complete list of UpTrain's supported metrics [here](https://docs.uptrain.ai/predefined-evaluations/overview)
 
+**Evaluate your data and view the response**
 ```python
 results = eval_llm.evaluate(
-    project_name = 'Ollama-Demo',
+    project_name = 'Litellm-tutorial',
     data=data,
     checks=[Evals.CONTEXT_RELEVANCE, Evals.RESPONSE_CONCISENESS, Evals.RESPONSE_RELEVANCE]
 )
-```
-
-**View your results**
-```python
-results = eval_llm.evaluate(
-    project_name = 'Ollama-tutorial-test',
-    data=data,
-    checks=[Evals.CONTEXT_RELEVANCE, Evals.RESPONSE_CONCISENESS, Evals.RESPONSE_RELEVANCE]
-)
+print(results)
 ```
 Sample Reponse:
 ```json
