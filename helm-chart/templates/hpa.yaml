@@ -1,0 +1,73 @@
+{{- if .Values.autoscaling.enabled.dashboard }}
+{{- if semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: autoscaling/v2beta2
+{{- else }}
+apiVersion: autoscaling/v2beta1
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "uptrain.fullname" . }}-dashboard
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "uptrain.fullname" . }}-dashboard
+  minReplicas: {{ .Values.autoscaling.dashboard.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.dashboard.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.dashboard.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.dashboard.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.dashboard.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.dashboard.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}
+
+{{- if .Values.autoscaling.enabled.server }}
+{{- if semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: autoscaling/v2beta2
+{{- else }}
+apiVersion: autoscaling/v2beta1
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "uptrain.fullname" . }}-server
+  labels:
+    {{- include "uptrain.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "uptrain.fullname" . }}-server
+  minReplicas: {{ .Values.autoscaling.server.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.server.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.server.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.server.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.server.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.server.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

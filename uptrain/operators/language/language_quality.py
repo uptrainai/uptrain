@@ -31,7 +31,7 @@ from uptrain.operators.language.prompts.few_shots import (
     LANGUAGE_CRITIQUE_POLITENESS_FEW_SHOT__CLASSIFY,
     LANGUAGE_CRITIQUE_POLITENESS_FEW_SHOT__COT,
     LANGUAGE_COHERENCE_FEW_SHOT__CLASSIFY,
-    LANGUAGE_COHERENCE_FEW_SHOT__COT
+    LANGUAGE_COHERENCE_FEW_SHOT__COT,
 )
 from uptrain.operators.language.prompts.instructions import CHAIN_OF_THOUGHT, CLASSIFY
 from uptrain.operators.language.prompts.output_format import (
@@ -167,9 +167,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_FLUENCY_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_FLUENCY_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -193,9 +195,9 @@ class LanguageCritique(ColumnOp):
                     json5.loads(res.response.choices[0].message.content)["Score"]
                 ]
                 output["score_fluency"] = float(score)
-                output["explanation_fluency"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_fluency"] = json5.loads(
+                    res.response.choices[0].message.content
+                )["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -229,9 +231,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_COHERENCE_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_COHERENCE_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -254,15 +258,15 @@ class LanguageCritique(ColumnOp):
                     json5.loads(res.response.choices[0].message.content)["Score"]
                 ]
                 output["score_coherence"] = float(score)
-                output["explanation_coherence"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_coherence"] = json5.loads(
+                    res.response.choices[0].message.content
+                )["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
                 )
             results[idx][1].update(output)
-    
+
         # Grammar
         input_payloads = []
         if self.settings.eval_type == "basic":
@@ -290,9 +294,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_GRAMMAR_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_GRAMMAR_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -315,9 +321,9 @@ class LanguageCritique(ColumnOp):
                     json5.loads(res.response.choices[0].message.content)["Score"]
                 ]
                 output["score_grammar"] = float(score)
-                output["explanation_grammar"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_grammar"] = json5.loads(
+                    res.response.choices[0].message.content
+                )["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -351,9 +357,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_POLITENESS_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_POLITENESS_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -376,9 +384,9 @@ class LanguageCritique(ColumnOp):
                     json5.loads(res.response.choices[0].message.content)["Score"]
                 ]
                 output["score_politeness"] = float(score)
-                output["explanation_politeness"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_politeness"] = json5.loads(
+                    res.response.choices[0].message.content
+                )["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

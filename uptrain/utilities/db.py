@@ -44,7 +44,7 @@ class ModelPrompt(SQLBase):
     __tablename__ = "prompts"
 
     id = Column(String, primary_key=True, nullable=False, default=get_uuid)
-    project_id =  Column(String, ForeignKey("projects.id"), nullable=False, index=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=get_current_datetime)
     name = Column(String, nullable=False)
     version = Column(Integer, nullable=False)
@@ -67,12 +67,13 @@ class ModelProjectRun(SQLBase):
     address = Column(String, nullable=False)
     project_id = Column(String, ForeignKey("projects.id"), nullable=False)
     dataset_id = Column(String, ForeignKey("project_datasets.id"), nullable=False)
-    prompt_id =  Column(String, ForeignKey("prompts.id"), nullable=True, default=None)
+    prompt_id = Column(String, ForeignKey("prompts.id"), nullable=True, default=None)
     status = Column(String, nullable=True)
     run_type = Column(String, nullable=False)
-    exp_column = Column(String, nullable=True, default = None)
+    exp_column = Column(String, nullable=True, default=None)
     checks = Column(JSON, nullable=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+
 
 class ModelProject(SQLBase):
     __tablename__ = "projects"

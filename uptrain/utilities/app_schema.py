@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 import datetime as dt
 
+
 class Dataset(BaseModel):
     name: str
     version: t.Optional[int]
@@ -29,14 +30,15 @@ class Evaluate(BaseModel):
 
 
 class EvaluateV2(BaseModel):
-    data: list[dict] #done
-    sink_data: list[dict] #done
-    checks: list[dict] #done
-    metadata: dict #
+    data: list[dict]  # done
+    sink_data: list[dict]  # done
+    checks: list[dict]  # done
+    metadata: dict  #
     schema_dict: dict
-    project: str #done
-    evaluation: str #done
+    project: str  # done
+    evaluation: str  # done
     exp_column: t.Optional[str] = None
+
 
 class DefaultRun(BaseModel):
     model: t.Any
@@ -46,10 +48,12 @@ class DefaultRun(BaseModel):
     project_id: t.Any
     metadata: t.Any
 
+
 class ProjectDataset(BaseModel):
     name: str
     version: t.Optional[int]
     id: str
+
 
 class DefaultPrompt(BaseModel):
     project_id: str
@@ -81,6 +85,7 @@ class EvaluateV3(BaseModel):
     checks: list[t.Any]
     metadata: dict = None
 
+
 class ProjectRun(BaseModel):
     project_id: str
     created_at: dt.datetime
@@ -89,6 +94,7 @@ class ProjectRun(BaseModel):
     dataset_id: str
     run_type: str
     exp_column: t.Optional[str] = None
+
 
 class PromptRun(BaseModel):
     evaluation_id: str

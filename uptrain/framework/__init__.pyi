@@ -20,7 +20,7 @@ __all__ = [
     "JailbreakDetection",
     "QueryResolution",
     "ConversationNumberOfTurns",
-    "ConversationObjective"
+    "ConversationObjective",
 ]
 
 from .base import OperatorDAG, Settings
@@ -39,7 +39,7 @@ from .evals import (
     JailbreakDetection,
     QueryResolution,
     ConversationNumberOfTurns,
-    ConversationObjective
+    ConversationObjective,
 )
 from .rca_templates import RcaTemplate
 from .evalllm import EvalLLM

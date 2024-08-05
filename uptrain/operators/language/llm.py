@@ -46,14 +46,15 @@ class Payload(BaseModel):
 
 
 def parse_json(json_str: str) -> dict:
-    first_brace_index = json_str.find('{')
-    last_brace_index = json_str.rfind('}')
-    json_str = json_str[first_brace_index:last_brace_index + 1]
+    first_brace_index = json_str.find("{")
+    last_brace_index = json_str.rfind("}")
+    json_str = json_str[first_brace_index : last_brace_index + 1]
     try:
         return json5.loads(json_str)
     except Exception as e:
         logger.error(f"Error when parsing JSON: {e}")
         return {}
+
 
 def run_validation(llm_output, validation_func):
     llm_output = parse_json(llm_output)
@@ -178,7 +179,12 @@ class LLMMulticlient:
         self.aclient = aclient
         self.settings = settings
         if settings is not None:
-            if (
+            if settings.custom_llm_provider == "litellm":
+                self.aclient = AsyncOpenAI(
+                    base_url=settings.api_base, api_key=settings.api_key
+                )
+
+            elif (
                 settings.model.startswith("gpt")
                 and settings.check_and_get("openai_api_key") is not None
             ):
@@ -186,7 +192,7 @@ class LLMMulticlient:
                 if self.aclient is None:
                     self.aclient = AsyncOpenAI()
 
-            if (
+            elif (
                 settings.model.startswith("azure")
                 and settings.check_and_get("azure_api_key") is not None
             ):
@@ -196,7 +202,7 @@ class LLMMulticlient:
                     azure_endpoint=settings.azure_api_base,
                 )
 
-            if (
+            elif (
                 settings.model.startswith("anyscale")
                 and settings.check_and_get("anyscale_api_key") is not None
             ):
@@ -204,7 +210,7 @@ class LLMMulticlient:
                     api_key=settings.anyscale_api_key,
                     base_url="https://api.endpoints.anyscale.com/v1",
                 )
-            if (
+            elif (
                 settings.model.startswith("together")
                 and settings.check_and_get("together_api_key") is not None
             ):
@@ -212,10 +218,8 @@ class LLMMulticlient:
                     api_key=settings.together_api_key,
                     base_url="https://api.together.xyz/v1",
                 )
-            if (
-                settings.model.startswith("ollama")
-            ):
-                self.aclient = None        
+            elif settings.model.startswith("ollama"):
+                self.aclient = None
             self._rpm_limit = settings.check_and_get("rpm_limit")
             self._tpm_limit = settings.check_and_get("tpm_limit")
 
@@ -244,10 +248,10 @@ class LLMMulticlient:
             data["seed"] = seed
         if response_format is not None:
             data["response_format"] = response_format
-        if custom_llm_provider is not None:
-            data["custom_llm_provider"] = custom_llm_provider
-        if api_base is not None:
-            data["api_base"] = api_base
+        # if custom_llm_provider is not None:
+        #     data["custom_llm_provider"] = custom_llm_provider
+        # if api_base is not None:
+        #     data["api_base"] = api_base
         return Payload(
             endpoint="chat.completions",
             data=data,

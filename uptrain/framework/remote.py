@@ -176,7 +176,11 @@ class APIClient:
         url = f"{self.base_url}/checkset"
         response = self.client.post(
             url,
-            json={"name": name, "config": checkset.dict(), "settings": settings.model_dump()},
+            json={
+                "name": name,
+                "config": checkset.dict(),
+                "settings": settings.model_dump(),
+            },
         )
         return raise_or_return(response)
 
@@ -575,7 +579,7 @@ class APIClient:
         """
         if evaluation_name is None:
             evaluation_name = "Eval - " + str(datetime.utcnow())
-        
+
         url = f"{self.base_url}/log_and_evaluate"
         if isinstance(data, pl.DataFrame):
             data = data.to_dicts()

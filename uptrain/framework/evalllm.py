@@ -55,7 +55,7 @@ from uptrain.operators import (
     CodeHallucinationScore,
     CustomPromptEvalScore,
     MultiQueryAccuracy,
-    ValidQuestionScore
+    ValidQuestionScore,
 )
 
 from uptrain.framework.rca_templates import RcaTemplate
@@ -97,7 +97,9 @@ PARAMETRIC_EVAL_TO_OPERATOR_MAPPING = {
 
 def get_uuid():
     import uuid
+
     return str(uuid.uuid4().hex)
+
 
 class EvalLLM:
     def __init__(self, settings: Settings = None, openai_api_key: str = None) -> None:
@@ -108,7 +110,9 @@ class EvalLLM:
             self.settings = Settings(openai_api_key=openai_api_key)
         else:
             self.settings = settings
-        if self.settings.openai_api_key is not None and len(self.settings.openai_api_key):
+        if self.settings.openai_api_key is not None and len(
+            self.settings.openai_api_key
+        ):
             response = check_openai_api_key(self.settings.openai_api_key)
             if not response:
                 raise ValueError("OpenAI API Key is invalid")
@@ -211,7 +215,7 @@ class EvalLLM:
         """
         if evaluation_name is None:
             evaluation_name = "Eval - " + str(datetime.utcnow())
-        
+
         if isinstance(data, pl.DataFrame):
             data = data.to_dicts()
         elif isinstance(data, pd.DataFrame):
@@ -270,7 +274,15 @@ class EvalLLM:
                 req_attrs.update(
                     [schema.question, schema.response, schema.ground_truth]
                 )
-            elif isinstance(m, t.Union[ConversationSatisfaction, ConversationGuidelineAdherence, ConversationNumberOfTurns, QueryResolution]):
+            elif isinstance(
+                m,
+                t.Union[
+                    ConversationSatisfaction,
+                    ConversationGuidelineAdherence,
+                    ConversationNumberOfTurns,
+                    QueryResolution,
+                ],
+            ):
                 req_attrs.update([schema.conversation])
             elif m in [Evals.PROMPT_INJECTION] or isinstance(m, JailbreakDetection):
                 req_attrs.update([schema.question])
@@ -332,17 +344,11 @@ class EvalLLM:
                         .to_dicts()
                     )
                 elif isinstance(check, ColumnOp):
-                    op = Check(name = "dummy", operators = [check])
-                    res = (
-                        op.setup(self.settings)
-                        .run(pl.DataFrame(data))
-                    ).to_dicts()
+                    op = Check(name="dummy", operators=[check])
+                    res = (op.setup(self.settings).run(pl.DataFrame(data))).to_dicts()
                 elif isinstance(check, list):
-                    op = Check(name = "dummy", operators = check)
-                    res = (
-                        op.setup(self.settings)
-                        .run(pl.DataFrame(data))
-                    ).to_dicts()
+                    op = Check(name="dummy", operators=check)
+                    res = (op.setup(self.settings).run(pl.DataFrame(data))).to_dicts()
                 else:
                     res = self.evaluate_on_server(data, [ser_checks[idx]], schema)
                 for idx, row in enumerate(res):
@@ -358,11 +364,13 @@ class EvalLLM:
 
             sink_data = copy.deepcopy(results)
             for idx, data_point in enumerate(sink_data):
-                row_uuid= get_uuid()
+                row_uuid = get_uuid()
                 data_point["row_uuid"] = row_uuid
                 for key_dict in list(data_point.keys()):
                     if "confidence" in key_dict:
-                        data_point['score_confidence' + '_' + key_dict.split("confidence_")[-1]] = data_point[key_dict]
+                        data_point[
+                            "score_confidence" + "_" + key_dict.split("confidence_")[-1]
+                        ] = data_point[key_dict]
                     if key_dict.startswith("score") and "confidence" not in key_dict:
                         data_point["status_" + key_dict] = "not updated"
 
@@ -377,12 +385,18 @@ class EvalLLM:
                     "schema_dict": schema.model_dump(),
                     "project": project_name,
                     "evaluation": evaluation_name,
-                    "exp_column": None if metadata.get("uptrain_experiment_columns", None) is None else metadata.get("uptrain_experiment_columns", None)[0]
+                    "exp_column": (
+                        None
+                        if metadata.get("uptrain_experiment_columns", None) is None
+                        else metadata.get("uptrain_experiment_columns", None)[0]
+                    ),
                 },
             )
         except Exception:
-            #user_id = "default_key"
-            logger.info("Local server not running, start the server to log data and visualize in the dashboard!")
+            # user_id = "default_key"
+            logger.info(
+                "Local server not running, start the server to log data and visualize in the dashboard!"
+            )
         return results
 
     def evaluate_on_server(self, data, ser_checks, schema):
@@ -441,7 +455,7 @@ class EvalLLM:
             metadata = {}
         if evaluation_name is None:
             evaluation_name = "Expt - " + str(datetime.utcnow())
-        
+
         metadata.update({"uptrain_experiment_columns": exp_columns})
 
         if schema is None:
@@ -466,8 +480,8 @@ class EvalLLM:
             logger.info("Duplicates found in data: Removing duplicates")
             results = results.unique()
         exp_results = results.pivot(
-                values=value_cols, index=index_cols, columns=exp_columns
-            )
+            values=value_cols, index=index_cols, columns=exp_columns
+        )
         exp_results = exp_results.to_dicts()
         return exp_results
 

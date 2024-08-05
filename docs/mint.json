@@ -166,7 +166,8 @@
         "llms/mistral",
         "llms/together_ai",
         "llms/anyscale",
-        "llms/ollama"
+        "llms/ollama",
+        "llms/litellm"
       ]
     },
     {

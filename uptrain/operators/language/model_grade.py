@@ -294,7 +294,10 @@ class ModelGradeScore(ColumnOp):
         return self
 
     def _make_payload(self, id: t.Any, messages: list[dict]) -> Payload:
-        payload = Payload(data={"model": self.model, "messages": messages, "temperature": 0.2}, metadata={"index": id})
+        payload = Payload(
+            data={"model": self.model, "messages": messages, "temperature": 0.2},
+            metadata={"index": id},
+        )
         if self._settings.seed is not None:
             payload.data["seed"] = self._settings.seed
         if self._aclient is not None:

@@ -130,9 +130,10 @@ class EvalPromptfoo:
                 return None
 
     def view(
-        self, port: t.Optional[int] = pr_u.generate_open_port(),
+        self,
+        port: t.Optional[int] = pr_u.generate_open_port(),
         kill_process_on_exit: t.Optional[bool] = True,
-        ) -> None:
+    ) -> None:
         try:
             try:
                 subprocess.run(
@@ -149,7 +150,7 @@ class EvalPromptfoo:
                 logger.error(
                     "Something failed: Try running !npx promptfoo@latest view" + e
                 )
-        
+
         except:
             if kill_process_on_exit:
                 try:
