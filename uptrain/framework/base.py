@@ -60,6 +60,7 @@ class Settings(BaseSettings):
         anyscale_api_key: API key for Anyscale: https://app.endpoints.anyscale.com/credentials
         together_api_key: API key for Together: https://api.together.xyz/settings/api-keys
         mistral_api_key: API key for Mistral: https://console.mistral.ai/user/api-keys/
+        clarifai_api_key: API key for Clarifai: https://clarifai.com/settings/security
 
         # For vllm: https://litellm.vercel.app/docs/providers/vllm
         custom_llm_provider: Custom LLM provider.
@@ -77,7 +78,6 @@ class Settings(BaseSettings):
         deserialize: Deserialize settings from a JSON file.
     """
 
-
     logs_folder: str = "/tmp/uptrain-logs"
     model: str = "gpt-3.5-turbo"
     seed: t.Union[int, None] = None
@@ -93,24 +93,18 @@ class Settings(BaseSettings):
     tpm_limit: int = 90_000
 
     # UpTrain managed service
-    uptrain_access_token: t.Optional[str] = Field(
-        None, env="UPTRAIN_ACCESS_TOKEN"
-    )
+    uptrain_access_token: t.Optional[str] = Field(None, env="UPTRAIN_ACCESS_TOKEN")
     uptrain_server_url: str = Field(
         "https://demo.uptrain.ai/", env="UPTRAIN_SERVER_URL"
     )
-    
+
     # UpTrain open-source
-    uptrain_local_url: str = Field(
-        "http://localhost:4300", env="UPTRAIN_LOCAL_URL"
-    )
+    uptrain_local_url: str = Field("http://localhost:4300", env="UPTRAIN_LOCAL_URL")
 
     # Embedding model
     embedding_compute_method: t.Literal["local", "replicate", "api"] = "local"
     ## Applicable if embedding_compute_method is api.
-    embedding_model_url: t.Optional[str] = Field(
-        None, env="EMBEDDING_MODEL_URL"
-    )
+    embedding_model_url: t.Optional[str] = Field(None, env="EMBEDDING_MODEL_URL")
     embedding_model_api_token: t.Optional[str] = Field(
         None, env="EMBEDDING_MODEL_API_TOKEN"
     )
@@ -122,28 +116,21 @@ class Settings(BaseSettings):
     # External API keys
     openai_api_key: t.Optional[str] = Field(None, env="OPENAI_API_KEY")
     cohere_api_key: t.Optional[str] = Field(None, env="COHERE_API_KEY")
-    huggingface_api_key: t.Optional[str] = Field(
-        None, env="HUGGINGFACE_API_KEY"
-    )
-    anthropic_api_key: t.Optional[str] = Field(
-        None, env="ANTHROPIC_API_KEY"
-    )
-    replicate_api_token: t.Optional[str] = Field(
-        None, env="REPLICATE_API_TOKEN"
-    )
+    huggingface_api_key: t.Optional[str] = Field(None, env="HUGGINGFACE_API_KEY")
+    anthropic_api_key: t.Optional[str] = Field(None, env="ANTHROPIC_API_KEY")
+    replicate_api_token: t.Optional[str] = Field(None, env="REPLICATE_API_TOKEN")
     anyscale_api_key: t.Optional[str] = Field(None, env="ANYSCALE_API_KEY")
     together_api_key: t.Optional[str] = Field(None, env="TOGETHER_API_KEY")
     mistral_api_key: t.Optional[str] = Field(None, env="MISTRAL_API_KEY")
+    clarifai_api_key: t.Optional[str] = Field(None, env="CLARIFAI_API_KEY")
 
     azure_api_key: t.Optional[str] = Field(None, env="AZURE_API_KEY")
     azure_api_base: t.Optional[str] = Field(None, env="AZURE_API_BASE")
-    azure_api_version: t.Optional[str] = Field(
-        None, env="AZURE_API_VERSION"
-    )
+    azure_api_version: t.Optional[str] = Field(None, env="AZURE_API_VERSION")
 
     # Pydantic settings configuration (not relevant for the user)
     model_config = SettingsConfigDict(extra="allow")
-    model_config['protected_namespaces'] = ()
+    model_config["protected_namespaces"] = ()
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -191,6 +178,9 @@ class Settings(BaseSettings):
         if "uptrain_server_url" in data:
             if data["uptrain_server_url"] is not None:
                 os.environ["UPTRAIN_SERVER_URL"] = data["uptrain_server_url"]
+        if "clarifai_api_key" in data:
+            if data["clarifai_api_key"] is not None:
+                os.environ["CLARIFAI_API_KEY"] = data["clarifai_api_key"]
 
     def check_and_get(self, key: str) -> t.Any:
         """Check if a value is present in the settings and return it."""
@@ -216,7 +206,7 @@ class Settings(BaseSettings):
 class OperatorDAG:
     """
     A Graph is a DAG of Uptrain table operators, that defines the data pipeline to execute.
-    
+
     Attributes:
         name: Name of the DAG.
         graph: Directed graph of operators.

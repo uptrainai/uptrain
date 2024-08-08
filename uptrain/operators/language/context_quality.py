@@ -15,7 +15,7 @@ if t.TYPE_CHECKING:
     from uptrain.framework import Settings
 from uptrain.operators.base import register_op, ColumnOp, TYPE_TABLE_OUTPUT
 from uptrain.utilities import polars_to_json_serializable_dict
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 
 from uptrain.operators.language.prompts.classic import (
     CONTEXT_CONCISENESS_PROMPT_TEMPLATE,
@@ -183,13 +183,10 @@ class ContextRelevance(ColumnOp):
                 "explanation_context_relevance": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_context_relevance"] = float(score)
-                output["explanation_context_relevance"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_context_relevance"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -346,12 +343,11 @@ class ResponseCompletenessWrtContext(ColumnOp):
                 "explanation_response_completeness_wrt_context": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_response_completeness_wrt_context"] = float(score)
                 output["explanation_response_completeness_wrt_context"] = (
-                    res.response.choices[0].message.content
+                    response_content
                 )
             except Exception:
                 logger.error(
@@ -500,13 +496,10 @@ class ContextReranking(ColumnOp):
                 "explanation_context_reranking": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_context_reranking"] = float(score)
-                output["explanation_context_reranking"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_context_reranking"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -656,13 +649,10 @@ class ContextConciseness(ColumnOp):
                 "explanation_context_conciseness": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_context_conciseness"] = float(score)
-                output["explanation_context_conciseness"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_context_conciseness"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

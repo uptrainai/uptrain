@@ -9,7 +9,7 @@ import json
 import polars as pl
 import typing as t
 
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 from uptrain.operators.language.prompts.classic import (
     JAILBREAK_DETECTION_PROMPT_TEMPLATE,
     PROMPT_INJECTION_PROMPT_TEMPLATE,
@@ -179,13 +179,10 @@ class JailbreakDetectionScore(ColumnOp):
                 "explanation_jailbreak_attempted": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_jailbreak_attempted"] = float(score)
-                output["explanation_jailbreak_attempted"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_jailbreak_attempted"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -327,13 +324,10 @@ class PromptInjectionScore(ColumnOp):
                 "explanation_prompt_injection": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_prompt_injection"] = float(score)
-                output["explanation_prompt_injection"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_prompt_injection"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
