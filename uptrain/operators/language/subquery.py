@@ -169,9 +169,7 @@ class SubQueryCompleteness(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_sub_query_completeness"] = float(score)
                 output["explanation_sub_query_completeness"] = response_content
             except Exception:

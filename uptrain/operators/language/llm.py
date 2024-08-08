@@ -46,14 +46,15 @@ class Payload(BaseModel):
 
 
 def parse_json(json_str: str) -> dict:
-    first_brace_index = json_str.find('{')
-    last_brace_index = json_str.rfind('}')
-    json_str = json_str[first_brace_index:last_brace_index + 1]
+    first_brace_index = json_str.find("{")
+    last_brace_index = json_str.rfind("}")
+    json_str = json_str[first_brace_index : last_brace_index + 1]
     try:
         return json5.loads(json_str)
     except Exception as e:
         logger.error(f"Error when parsing JSON: {e}")
         return {}
+
 
 def run_validation(llm_output, validation_func):
     llm_output = parse_json(llm_output)
@@ -212,10 +213,8 @@ class LLMMulticlient:
                     api_key=settings.together_api_key,
                     base_url="https://api.together.xyz/v1",
                 )
-            if (
-                settings.model.startswith("ollama")
-            ):
-                self.aclient = None        
+            if settings.model.startswith("ollama"):
+                self.aclient = None
             self._rpm_limit = settings.check_and_get("rpm_limit")
             self._tpm_limit = settings.check_and_get("tpm_limit")
 

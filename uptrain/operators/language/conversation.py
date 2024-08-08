@@ -271,17 +271,13 @@ class QueryResolutionScore(ColumnOp):
                 )
 
         except Exception as e:
-            logger.error(
-                f"Failed to run evaluation for `QueryResolution`: {e}"
-            )
+            logger.error(f"Failed to run evaluation for `QueryResolution`: {e}")
             raise e
 
         assert results is not None
         return {
             "output": data.with_columns(
-                pl.from_dicts(results).rename(
-                    {"score_query_resolution": self.col_out}
-                )
+                pl.from_dicts(results).rename({"score_query_resolution": self.col_out})
             )
         }
 
@@ -300,7 +296,7 @@ class QueryResolutionScore(ColumnOp):
         """
         Our methodology is based on the model grade evaluation introduced by openai evals.
         """
-            
+
         self.scenario_description, scenario_vars = parse_scenario_description(
             self.scenario_description
         )
@@ -332,11 +328,9 @@ class QueryResolutionScore(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = (
-                    QUERY_RESOLUTION_PROMPT_TEMPLATE.replace(
-                        "{scenario_description}", self.scenario_description
-                    ).format(**kwargs)
-                )
+                grading_prompt_template = QUERY_RESOLUTION_PROMPT_TEMPLATE.replace(
+                    "{scenario_description}", self.scenario_description
+                ).format(**kwargs)
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -402,7 +396,7 @@ class ConversationNumberOfTurnsScore(ColumnOp):
         else:
             self._api_client = APIClient(settings)
         return self
-    
+
     def run(self, data: pl.DataFrame) -> TYPE_TABLE_OUTPUT:
         data_send = polars_to_json_serializable_dict(data)
         for row in data_send:
@@ -438,7 +432,7 @@ class ConversationNumberOfTurnsScore(ColumnOp):
                 )
             )
         }
-    
+
     def conversation_number_of_turns_classify_validate_func(self, llm_output):
         is_correct = True
         is_correct = is_correct and ("Turns" in llm_output)
@@ -446,10 +440,12 @@ class ConversationNumberOfTurnsScore(ColumnOp):
         return is_correct
 
     def conversation_number_of_turns_cot_validate_func(self, llm_output):
-        is_correct = self.conversation_number_of_turns_classify_validate_func(llm_output)
+        is_correct = self.conversation_number_of_turns_classify_validate_func(
+            llm_output
+        )
         is_correct = is_correct and ("Reasoning" in llm_output)
         return is_correct
-    
+
     def evaluate_local(self, data):
         """
         Our methodology is based on the model grade evaluation introduced by openai evals.
@@ -470,7 +466,7 @@ class ConversationNumberOfTurnsScore(ColumnOp):
             raise ValueError(
                 f"Invalid eval_type: {self.settings.eval_type}. Must be either 'basic' or 'cot'"
             )
-        
+
         for idx, row in enumerate(data):
             kwargs = row
             kwargs.update(
@@ -591,7 +587,9 @@ class ConversationGuidelineAdherenceScore(ColumnOp):
         return is_correct
 
     def conversation_guideline_adherence_cot_validate_func(self, llm_output):
-        is_correct = self.conversation_guideline_adherence_classify_validate_func(llm_output)
+        is_correct = self.conversation_guideline_adherence_classify_validate_func(
+            llm_output
+        )
         is_correct = is_correct and ("Reasoning" in llm_output)
         return is_correct
 
@@ -603,7 +601,9 @@ class ConversationGuidelineAdherenceScore(ColumnOp):
         if self.settings.eval_type == "basic":
             few_shot_examples = CONVERSATION_GUIDELINE_ADHERENCE_FEW_SHOT__CLASSIFY
             output_format = CONVERSATION_GUIDELINE_ADHERENCE_OUTPUT_FORMAT__CLASSIFY
-            validation_func = self.conversation_guideline_adherence_classify_validate_func
+            validation_func = (
+                self.conversation_guideline_adherence_classify_validate_func
+            )
             prompting_instructions = CLASSIFY
 
         elif self.settings.eval_type == "cot":
@@ -611,7 +611,6 @@ class ConversationGuidelineAdherenceScore(ColumnOp):
             output_format = CONVERSATION_GUIDELINE_ADHERENCE_OUTPUT_FORMAT__COT
             validation_func = self.conversation_guideline_adherence_cot_validate_func
             prompting_instructions = CHAIN_OF_THOUGHT
-
 
         for idx, row in enumerate(data):
             kwargs = row
@@ -644,11 +643,16 @@ class ConversationGuidelineAdherenceScore(ColumnOp):
                 "explanation_conversation_guideline_adherence": None,
             }
             try:
-                score = 0.0 if json.loads(res.response.choices[0].message.content)["Choice"] == "A" else 1.0
+                score = (
+                    0.0
+                    if json.loads(res.response.choices[0].message.content)["Choice"]
+                    == "A"
+                    else 1.0
+                )
                 output["score_conversation_guideline_adherence"] = float(score)
-                output["explanation_conversation_guideline_adherence"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_conversation_guideline_adherence"] = (
+                    res.response.choices[0].message.content
+                )
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

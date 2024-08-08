@@ -72,6 +72,7 @@ class ValidQuestionScore(ColumnOp):
             )
         }
 
+
 @register_op
 class QueryRewrite(ColumnOp):
     """
@@ -114,30 +115,23 @@ class QueryRewrite(ColumnOp):
             ):
                 results = self.evaluate_local(data_send)
             else:
-                results = self._api_client.evaluate(
-                    "query_rewriting",
-                    data_send
-                )
+                results = self._api_client.evaluate("query_rewriting", data_send)
         except Exception as e:
-            logger.error(
-                f"Failed to run evaluation for `QueryRewrite`: {e}"
-            )
+            logger.error(f"Failed to run evaluation for `QueryRewrite`: {e}")
             raise e
 
         assert results is not None
         return {
             "output": data.with_columns(
-                pl.from_dicts(results).rename(
-                    {"revised_question": self.col_out}
-                )
+                pl.from_dicts(results).rename({"revised_question": self.col_out})
             )
         }
-    
+
     def query_rewrite_validate_func(self, llm_output):
         is_correct = True
         is_correct = is_correct and ("Question" in llm_output)
         return is_correct
-    
+
     def evaluate_local(self, data):
         """
         Our methodology is based on the model grade evaluation introduced by openai evals.
@@ -151,21 +145,19 @@ class QueryRewrite(ColumnOp):
         output_format = QUERY_REWRITE_OUTPUT_FORMAT__CLASSIFY
         validation_func = self.query_rewrite_validate_func
         prompting_instructions = CLASSIFY
-        
+
         for idx, row in enumerate(data):
             kwargs = row
             kwargs.update(
                 {
                     "output_format": output_format,
-                    "prompting_instructions": prompting_instructions
+                    "prompting_instructions": prompting_instructions,
                 }
             )
             try:
-                grading_prompt_template = (
-                    QUERY_REWRITE_PROMPT_TEMPLATE.replace(
-                        "{scenario_description}", self.scenario_description
-                    ).format(**kwargs)
-                )
+                grading_prompt_template = QUERY_REWRITE_PROMPT_TEMPLATE.replace(
+                    "{scenario_description}", self.scenario_description
+                ).format(**kwargs)
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"

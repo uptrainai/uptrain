@@ -31,7 +31,7 @@ from uptrain.operators.language.prompts.few_shots import (
     LANGUAGE_CRITIQUE_POLITENESS_FEW_SHOT__CLASSIFY,
     LANGUAGE_CRITIQUE_POLITENESS_FEW_SHOT__COT,
     LANGUAGE_COHERENCE_FEW_SHOT__CLASSIFY,
-    LANGUAGE_COHERENCE_FEW_SHOT__COT
+    LANGUAGE_COHERENCE_FEW_SHOT__COT,
 )
 from uptrain.operators.language.prompts.instructions import CHAIN_OF_THOUGHT, CLASSIFY
 from uptrain.operators.language.prompts.output_format import (
@@ -167,9 +167,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_FLUENCY_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_FLUENCY_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -190,9 +192,7 @@ class LanguageCritique(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Score"]
-                ]
+                score = self.score_mapping[response_content["Score"]]
                 output["score_fluency"] = float(score)
                 output["explanation_fluency"] = response_content["Reasoning"]
             except Exception:
@@ -228,9 +228,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_COHERENCE_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_COHERENCE_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -250,9 +252,7 @@ class LanguageCritique(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Score"]
-                ]
+                score = self.score_mapping[response_content["Score"]]
                 output["score_coherence"] = float(score)
                 output["explanation_coherence"] = response_content["Reasoning"]
             except Exception:
@@ -260,7 +260,7 @@ class LanguageCritique(ColumnOp):
                     f"Error when processing payload at index {idx}: {res.error}"
                 )
             results[idx][1].update(output)
-    
+
         # Grammar
         input_payloads = []
         if self.settings.eval_type == "basic":
@@ -288,9 +288,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_GRAMMAR_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_GRAMMAR_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -310,9 +312,7 @@ class LanguageCritique(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Score"]
-                ]
+                score = self.score_mapping[response_content["Score"]]
                 output["score_grammar"] = float(score)
                 output["explanation_grammar"] = response_content["Reasoning"]
             except Exception:
@@ -348,9 +348,11 @@ class LanguageCritique(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = LANGUAGE_CRITIQUE_POLITENESS_PROMPT_TEMPLATE.replace(
-                    "{scenario_description}", self.scenario_description
-                ).format(**kwargs)
+                grading_prompt_template = (
+                    LANGUAGE_CRITIQUE_POLITENESS_PROMPT_TEMPLATE.replace(
+                        "{scenario_description}", self.scenario_description
+                    ).format(**kwargs)
+                )
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -370,9 +372,7 @@ class LanguageCritique(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Score"]
-                ]
+                score = self.score_mapping[response_content["Score"]]
                 output["score_politeness"] = float(score)
                 output["explanation_politeness"] = response_content["Reasoning"]
             except Exception:
@@ -517,9 +517,7 @@ class ResponseCoherence(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_response_coherence"] = float(score)
                 output["explanation_response_coherence"] = response_content
             except Exception:

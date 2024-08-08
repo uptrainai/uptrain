@@ -144,11 +144,9 @@ class MultiQueryAccuracy(ColumnOp):
                 }
             )
             try:
-                grading_prompt_template = (
-                    MULTI_QUERY_ACCURACY_PROMPT_TEMPLATE.replace(
-                        "{scenario_description}", self.scenario_description
-                    ).format(**kwargs)
-                )
+                grading_prompt_template = MULTI_QUERY_ACCURACY_PROMPT_TEMPLATE.replace(
+                    "{scenario_description}", self.scenario_description
+                ).format(**kwargs)
             except KeyError as e:
                 raise KeyError(
                     f"Missing required attribute(s) for scenario description: {e}"
@@ -172,7 +170,7 @@ class MultiQueryAccuracy(ColumnOp):
                 score = self.score_mapping[response_content["Choice"]]
                 output["score_multi_query_accuracy"] = float(score)
                 output["explanation_multi_query_accuracy"] = response_content
-                
+
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

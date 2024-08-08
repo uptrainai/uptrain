@@ -187,9 +187,7 @@ class ResponseCompleteness(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_response_completeness"] = float(score)
                 output["explanation_response_completeness"] = response_content
             except Exception:
@@ -338,9 +336,7 @@ class ResponseConciseness(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                   response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_response_conciseness"] = float(score)
                 output["explanation_response_conciseness"] = response_content
             except Exception:
@@ -488,11 +484,13 @@ class ResponseConsistency(ColumnOp):
                 response_content = parse_json(res.response.choices[0].message.content)
                 score = response_content["Score"]
                 output["score_response_consistency"] = float(score)
-                output["explanation_response_consistency"] = response_content["Argument"]
+                output["explanation_response_consistency"] = response_content[
+                    "Argument"
+                ]
                 if self.settings.eval_type == "cot":
-                    output["explanation_response_consistency"] += "\n" + response_content[
-                        "Reasoning"
-                    ]
+                    output["explanation_response_consistency"] += (
+                        "\n" + response_content["Reasoning"]
+                    )
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -632,9 +630,7 @@ class ValidResponseScore(ColumnOp):
             output = {"score_valid_response": None, "explanation_valid_response": None}
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_valid_response"] = float(score)
                 output["explanation_valid_response"] = response_content
             except Exception:
@@ -810,7 +806,9 @@ class ResponseMatchingScore(ColumnOp):
         self.settings = settings
         self.col_out = f"score_response_match_{self.method}"
         if self.method not in ["exact", "rouge", "llm"]:
-            raise Exception(f"Metric: {self.method} is not supported. Supported metrics are: ['exact', 'rouge', 'llm']")
+            raise Exception(
+                f"Metric: {self.method} is not supported. Supported metrics are: ['exact', 'rouge', 'llm']"
+            )
         if self.settings.evaluate_locally and (
             self.settings.uptrain_access_token is None
             or not len(self.settings.uptrain_access_token)
@@ -869,37 +867,35 @@ class ResponseMatchingScore(ColumnOp):
         Our methodology is based on the model grade evaluation introduced by openai evals.
         """
 
-        if self.method=='rouge':
+        if self.method == "rouge":
             dataset = pl.from_dicts(data)
             op = RougeScore(
-                score_type='f1',
-                col_in_generated='response',
-                col_in_source='ground_truth',
-                col_out='rouge_score',
+                score_type="f1",
+                col_in_generated="response",
+                col_in_source="ground_truth",
+                col_out="rouge_score",
             )
             output_df = op.setup(Settings()).run(dataset)["output"]
             assert output_df is not None
             return [
-                {
-                    "score_response_match": row['rouge_score']
-                }
+                {"score_response_match": row["rouge_score"]}
                 for row in output_df.to_dicts()
             ]
 
-        elif self.method=='exact':
-            results=[]
+        elif self.method == "exact":
+            results = []
             for row in data:
-                if row['response'].lower() == row['ground_truth'].lower():
-                    results.append({'score_response_match' : 1})
+                if row["response"].lower() == row["ground_truth"].lower():
+                    results.append({"score_response_match": 1})
                 else:
-                    results.append({'score_response_match' : 0})
+                    results.append({"score_response_match": 0})
             return results
 
-        elif self.method=='llm':
-            data_precision = copy.deepcopy(pl.DataFrame(data).drop('context')).rename(
+        elif self.method == "llm":
+            data_precision = copy.deepcopy(pl.DataFrame(data).drop("context")).rename(
                 {self.col_response: "response", self.col_ground_truth: "context"}
             )
-            data_recall = copy.deepcopy(pl.DataFrame(data).drop('context')).rename(
+            data_recall = copy.deepcopy(pl.DataFrame(data).drop("context")).rename(
                 {self.col_ground_truth: "response", self.col_response: "context"}
             )
             eval_data = pl.concat(

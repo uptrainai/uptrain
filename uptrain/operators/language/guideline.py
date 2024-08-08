@@ -184,11 +184,11 @@ class GuidelineAdherenceScore(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output[f"score_{self.guideline_name}_adherence"] = float(score)
-                output[f"explanation_{self.guideline_name}_adherence"] = response_content
+                output[f"explanation_{self.guideline_name}_adherence"] = (
+                    response_content
+                )
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

@@ -344,10 +344,11 @@ class ResponseCompletenessWrtContext(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_response_completeness_wrt_context"] = float(score)
-                output["explanation_response_completeness_wrt_context"] = response_content
+                output["explanation_response_completeness_wrt_context"] = (
+                    response_content
+                )
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

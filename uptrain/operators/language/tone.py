@@ -168,9 +168,7 @@ class ToneCritique(ColumnOp):
             output = {"score_critique_tone": None, "explanation_critique_tone": None}
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_critique_tone"] = float(score)
                 output["explanation_critique_tone"] = response_content
             except Exception:

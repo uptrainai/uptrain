@@ -180,9 +180,7 @@ class JailbreakDetectionScore(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_jailbreak_attempted"] = float(score)
                 output["explanation_jailbreak_attempted"] = response_content
             except Exception:
@@ -327,9 +325,7 @@ class PromptInjectionScore(ColumnOp):
             }
             try:
                 response_content = parse_json(res.response.choices[0].message.content)
-                score = self.score_mapping[
-                    response_content["Choice"]
-                ]
+                score = self.score_mapping[response_content["Choice"]]
                 output["score_prompt_injection"] = float(score)
                 output["explanation_prompt_injection"] = response_content
             except Exception:
