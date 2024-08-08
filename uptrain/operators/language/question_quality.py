@@ -16,7 +16,7 @@ if t.TYPE_CHECKING:
 from uptrain.operators.base import register_op, ColumnOp, TYPE_TABLE_OUTPUT
 from uptrain.framework import APIClient
 from uptrain.utilities import polars_to_json_serializable_dict
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 
 from uptrain.operators.language.prompts.classic import (
     QUERY_REWRITE_PROMPT_TEMPLATE,
@@ -184,7 +184,8 @@ class QueryRewrite(ColumnOp):
                 "revised_question": None,
             }
             try:
-                revised_question = json.loads(res.response.choices[0].message.content)["Question"]
+                response_content = parse_json(res.response.choices[0].message.content)
+                revised_question = response_content["Question"]
                 output["revised_question"] = revised_question
             except Exception:
                 logger.error(

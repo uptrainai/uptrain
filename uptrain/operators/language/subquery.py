@@ -28,7 +28,7 @@ if t.TYPE_CHECKING:
     from uptrain.framework import Settings
 from uptrain.operators.base import register_op, ColumnOp, TYPE_TABLE_OUTPUT
 from uptrain.utilities import polars_to_json_serializable_dict
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 
 
 @register_op
@@ -168,13 +168,12 @@ class SubQueryCompleteness(ColumnOp):
                 "explanation_sub_query_completeness": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output["score_sub_query_completeness"] = float(score)
-                output["explanation_sub_query_completeness"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_sub_query_completeness"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

@@ -13,7 +13,7 @@ import typing as t
 from loguru import logger
 import polars as pl
 
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 from uptrain.operators.language.prompts.classic import (
     LANGUAGE_COHERENCE_PROMPT_TEMPLATE,
     LANGUAGE_CRITIQUE_FLUENCY_PROMPT_TEMPLATE,
@@ -189,13 +189,12 @@ class LanguageCritique(ColumnOp):
                 "explanation_fluency": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json5.loads(res.response.choices[0].message.content)["Score"]
+                    response_content["Score"]
                 ]
                 output["score_fluency"] = float(score)
-                output["explanation_fluency"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_fluency"] = response_content["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -250,13 +249,12 @@ class LanguageCritique(ColumnOp):
                 "explanation_coherence": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json5.loads(res.response.choices[0].message.content)["Score"]
+                    response_content["Score"]
                 ]
                 output["score_coherence"] = float(score)
-                output["explanation_coherence"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_coherence"] = response_content["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -311,13 +309,12 @@ class LanguageCritique(ColumnOp):
                 "explanation_grammar": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json5.loads(res.response.choices[0].message.content)["Score"]
+                    response_content["Score"]
                 ]
                 output["score_grammar"] = float(score)
-                output["explanation_grammar"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_grammar"] = response_content["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -372,13 +369,12 @@ class LanguageCritique(ColumnOp):
                 "explanation_politeness": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json5.loads(res.response.choices[0].message.content)["Score"]
+                    response_content["Score"]
                 ]
                 output["score_politeness"] = float(score)
-                output["explanation_politeness"] = json5.loads(res.response.choices[
-                    0
-                ].message.content)["Reasoning"]
+                output["explanation_politeness"] = response_content["Reasoning"]
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -520,13 +516,12 @@ class ResponseCoherence(ColumnOp):
                 "explanation_response_coherence": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json5.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output["score_response_coherence"] = float(score)
-                output["explanation_response_coherence"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_response_coherence"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

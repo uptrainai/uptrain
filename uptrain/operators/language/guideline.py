@@ -10,7 +10,7 @@ import json
 import polars as pl
 import typing as t
 
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 from uptrain.operators.language.prompts.classic import (
     GUIDELINE_ADHERENCE_PROMPT_TEMPLATE,
 )
@@ -183,13 +183,12 @@ class GuidelineAdherenceScore(ColumnOp):
                 f"explanation_{self.guideline_name}_adherence": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output[f"score_{self.guideline_name}_adherence"] = float(score)
-                output[f"explanation_{self.guideline_name}_adherence"] = res.response.choices[
-                    0
-                ].message.content
+                output[f"explanation_{self.guideline_name}_adherence"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

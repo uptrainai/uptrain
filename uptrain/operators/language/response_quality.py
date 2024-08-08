@@ -17,7 +17,7 @@ if t.TYPE_CHECKING:
     from uptrain.framework import Settings
 from uptrain.operators.base import register_op, ColumnOp, TYPE_TABLE_OUTPUT
 from uptrain.utilities import polars_to_json_serializable_dict
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 from uptrain.operators.language.factual_accuracy import ResponseFactualScore
 from uptrain.operators.language.rouge import RougeScore
 from uptrain.framework import Settings
@@ -186,13 +186,12 @@ class ResponseCompleteness(ColumnOp):
                 "explanation_response_completeness": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output["score_response_completeness"] = float(score)
-                output["explanation_response_completeness"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_response_completeness"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -338,13 +337,12 @@ class ResponseConciseness(ColumnOp):
                 "explanation_response_conciseness": None,
             }
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                   response_content["Choice"]
                 ]
                 output["score_response_conciseness"] = float(score)
-                output["explanation_response_conciseness"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_response_conciseness"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
@@ -487,12 +485,12 @@ class ResponseConsistency(ColumnOp):
                 "explanation_response_consistency": None,
             }
             try:
-                parsed_output = json.loads(res.response.choices[0].message.content)
-                score = parsed_output["Score"]
+                response_content = parse_json(res.response.choices[0].message.content)
+                score = response_content["Score"]
                 output["score_response_consistency"] = float(score)
-                output["explanation_response_consistency"] = parsed_output["Argument"]
+                output["explanation_response_consistency"] = response_content["Argument"]
                 if self.settings.eval_type == "cot":
-                    output["explanation_response_consistency"] += "\n" + parsed_output[
+                    output["explanation_response_consistency"] += "\n" + response_content[
                         "Reasoning"
                     ]
             except Exception:
@@ -633,13 +631,12 @@ class ValidResponseScore(ColumnOp):
             idx = res.metadata["index"]
             output = {"score_valid_response": None, "explanation_valid_response": None}
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output["score_valid_response"] = float(score)
-                output["explanation_valid_response"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_valid_response"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"

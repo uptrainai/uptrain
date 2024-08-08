@@ -60,6 +60,7 @@ class Settings(BaseSettings):
         anyscale_api_key: API key for Anyscale: https://app.endpoints.anyscale.com/credentials
         together_api_key: API key for Together: https://api.together.xyz/settings/api-keys
         mistral_api_key: API key for Mistral: https://console.mistral.ai/user/api-keys/
+        clarifai_api_key: API key for Clarifai: https://clarifai.com/settings/security
 
         # For vllm: https://litellm.vercel.app/docs/providers/vllm
         custom_llm_provider: Custom LLM provider.
@@ -134,6 +135,7 @@ class Settings(BaseSettings):
     anyscale_api_key: t.Optional[str] = Field(None, env="ANYSCALE_API_KEY")
     together_api_key: t.Optional[str] = Field(None, env="TOGETHER_API_KEY")
     mistral_api_key: t.Optional[str] = Field(None, env="MISTRAL_API_KEY")
+    clarifai_api_key: t.Optional[str] = Field(None, env="CLARIFAI_API_KEY")
 
     azure_api_key: t.Optional[str] = Field(None, env="AZURE_API_KEY")
     azure_api_base: t.Optional[str] = Field(None, env="AZURE_API_BASE")
@@ -191,6 +193,9 @@ class Settings(BaseSettings):
         if "uptrain_server_url" in data:
             if data["uptrain_server_url"] is not None:
                 os.environ["UPTRAIN_SERVER_URL"] = data["uptrain_server_url"]
+        if "clarifai_api_key" in data:
+            if data["clarifai_api_key"] is not None:
+                os.environ["CLARIFAI_API_KEY"] = data["clarifai_api_key"]
 
     def check_and_get(self, key: str) -> t.Any:
         """Check if a value is present in the settings and return it."""

@@ -12,7 +12,7 @@ import typing as t
 from loguru import logger
 import polars as pl
 
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 from uptrain.operators.language.prompts.classic import (
     CRITIQUE_TONE_PROMPT_TEMPLATE,
 )
@@ -167,13 +167,12 @@ class ToneCritique(ColumnOp):
             idx = res.metadata["index"]
             output = {"score_critique_tone": None, "explanation_critique_tone": None}
             try:
+                response_content = parse_json(res.response.choices[0].message.content)
                 score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
+                    response_content["Choice"]
                 ]
                 output["score_critique_tone"] = float(score)
-                output["explanation_critique_tone"] = res.response.choices[
-                    0
-                ].message.content
+                output["explanation_critique_tone"] = response_content
             except Exception:
                 logger.error(
                     f"Error when processing payload at index {idx}: {res.error}"
