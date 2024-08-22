@@ -8,6 +8,7 @@ import itertools
 import typing as t
 import json
 import numpy as np
+import ast
 
 from loguru import logger
 import polars as pl
@@ -243,7 +244,7 @@ class TopicGenerator(ColumnOp):
             )
             agg_data = agg_data.drop("num_rows_" + self.col_in_text)
             unique_agg_keys = [
-                eval(x) for x in list(agg_data["_unique_agg_key_for_clustering"])
+                ast.literal_eval(x) for x in list(agg_data["_unique_agg_key_for_clustering"])
             ]
 
         self.topics = {}
