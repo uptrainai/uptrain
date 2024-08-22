@@ -17,6 +17,7 @@ import random
 import uvicorn
 import polars as pl
 import sys
+import ast
 
 from uptrain.operators import JsonReader, JsonWriter
 
@@ -467,7 +468,7 @@ def list_projects(
                 created_at=project.created_at,
                 project_name=project.name,
                 dataset_id=project.dataset_id,
-                checks=eval(project.checks)
+                checks=ast.literal_eval(project.checks)
             )
         )
     return results
@@ -719,9 +720,9 @@ async def create_project(
     with fsspec_fs.open(address, "wb") as f:
         f.write(data_file.file.read())
 
-    checks = eval(checks[0])
+    checks = ast.literal_eval(checks[0])
     checks_1 = []
-    metadata = eval(metadata)
+    metadata = ast.literal_eval(metadata)
 
     for check in checks:
         if check in metadata:
@@ -791,9 +792,9 @@ async def new_run(
         .first()
     )
     
-    checks = eval(checks[0])
+    checks = ast.literal_eval(checks[0])
     checks_1 = []
-    metadata = eval(metadata)
+    metadata = ast.literal_eval(metadata)
 
     version = str(random.random()).split('.')[-1][:2]
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
@@ -958,9 +959,9 @@ async def add_prompts(
         .first()
     )
     
-    checks = eval(checks[0])
+    checks = ast.literal_eval(checks[0])
     checks_1 = []
-    metadata = eval(metadata)
+    metadata = ast.literal_eval(metadata)
 
     version = str(random.random()).split('.')[-1][:2]
     name_w_version = os.path.join(user_id, dataset_name, f"v_{version}")
