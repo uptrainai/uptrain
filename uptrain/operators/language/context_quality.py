@@ -15,7 +15,7 @@ if t.TYPE_CHECKING:
     from uptrain.framework import Settings
 from uptrain.operators.base import register_op, ColumnOp, TYPE_TABLE_OUTPUT
 from uptrain.utilities import polars_to_json_serializable_dict
-from uptrain.operators.language.llm import LLMMulticlient
+from uptrain.operators.language.llm import LLMMulticlient, parse_json
 
 from uptrain.operators.language.prompts.classic import (
     CONTEXT_CONCISENESS_PROMPT_TEMPLATE,
@@ -183,22 +183,26 @@ class ContextRelevance(ColumnOp):
                 "explanation_context_relevance": None,
             }
             try:
-                score = self.score_mapping[
-                    json.loads(res.response.choices[0].message.content)["Choice"]
-                ]
+                content = res.response.choices[0].message.content
+                parsed_content = parse_json(content)
+                #parsed_content = json.loads(content)
+                choice = parsed_content["Choice"]
+                score = self.score_mapping[choice]
                 output["score_context_relevance"] = float(score)
-                output["explanation_context_relevance"] = res.response.choices[
-                    0
-                ].message.content
-            except Exception:
-                logger.error(
-                    f"Error when processing payload at index {idx}: {res.error}"
-                )
+                output["explanation_context_relevance"] = content
+            except json.JSONDecodeError as e:
+                logger.error(f"JSONDecodeError at index {idx}: {str(e)}")
+                logger.error(f"Printing res: {res}")
+                logger.error(f"Raw content: {content}")
+            except KeyError as e:
+                logger.error(f"KeyError at index {idx}: {str(e)}")
+                logger.error(f"Parsed content: {parsed_content}")
+            except Exception as e:
+                logger.error(f"Unexpected error at index {idx}: {type(e).__name__}: {str(e)}")
             results.append((idx, output))
         results = [val for _, val in sorted(results, key=lambda x: x[0])]
 
         return results
-
 
 @register_op
 class ResponseCompletenessWrtContext(ColumnOp):
