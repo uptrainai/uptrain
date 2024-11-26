@@ -2,6 +2,7 @@ version: "3.9"
 services:
   ### FastAPI server
   server:
+    platform: linux/arm64
     build: ./uptrain/dashboard/backend
     image: ghcr.io/uptrain-ai/uptrain:v0.1
     restart: always
@@ -17,6 +18,7 @@ services:
 
   ###  dashboard
   dashboard:
+    platform: linux/arm64
     build: ./uptrain/dashboard/frontend
     image: ghcr.io/uptrain-ai/uptrain-dashboard:v0.1
     restart: always

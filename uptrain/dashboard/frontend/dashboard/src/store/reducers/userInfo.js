@@ -26,7 +26,7 @@ const userInfoSlice = createSlice({
   },
 });
 
-export const { addUserData } = userInfoSlice.actions;
+export const { addUserData, removeUserData } = userInfoSlice.actions;
 export default userInfoSlice.reducer;
 export const selectUserName = (state) => state.userInfo.user_name;
 export const selectTotalCredits = (state) => state.userInfo.credits_total;

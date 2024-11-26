@@ -100,17 +100,19 @@ const AddProjectModal = (props) => {
     const multiChecks = [];
     const data = {};
 
-    for (let i = 0; i < props.checks.checks.length; i++) {
-      const item = props.checks.checks[i];
-      if (singleMetrics.includes(item.check_name)) {
-        singleChecks.push(singleMetrics.indexOf(item.check_name));
-      } else if (multiMetrics.hasOwnProperty(item.check_name)) {
-        multiChecks.push(item.check_name);
-        data[item.check_name] = {};
+    if (props.checks && props.checks.checks) {
+      for (let i = 0; i < props.checks.checks.length; i++) {
+        const item = props.checks.checks[i];
+        if (singleMetrics.includes(item.check_name)) {
+          singleChecks.push(singleMetrics.indexOf(item.check_name));
+        } else if (multiMetrics.hasOwnProperty(item.check_name)) {
+          multiChecks.push(item.check_name);
+          data[item.check_name] = {};
 
-        for (const key in item) {
-          if (key === "check_name") continue;
-          data[item.check_name][key] = item[key];
+          for (const key in item) {
+            if (key === "check_name") continue;
+            data[item.check_name][key] = item[key];
+          }
         }
       }
     }
